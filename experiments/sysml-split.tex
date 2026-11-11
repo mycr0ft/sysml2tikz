@@ -1,0 +1,74 @@
+\documentclass[tikz,border=8pt]{standalone}
+\usetikzlibrary{arrows.meta,positioning,shapes.multipart,calc}
+
+\tikzset{
+  % SysML v2 block: three compartments (name / features / constraints)
+  block/.style 2 args={
+    rectangle split, rectangle split parts=3, draw, thick, rounded corners=1pt,
+    rectangle split part align={center,left,left},
+    text width=#1, font=\footnotesize\sffamily, inner sep=4pt,
+    execute at begin node={\setlength{\parindent}{0pt}},
+    label={[font=\scriptsize\sffamily\bfseries, anchor=south]north:{#2}}
+  },
+  port/.style={draw, fill=white, minimum size=2.6mm, inner sep=0pt, thick},
+  comp/.style={-{Diamond[length=3.4mm,width=2.4mm,fill=black]}, thick},
+  gen/.style={-{Triangle[length=3.2mm,width=3mm,open,fill=white]}, thick},
+  dep/.style={-{Stealth[length=2.4mm]}, densely dotted},
+  flow/.style={-{Stealth[length=2.4mm]}, dashed},
+}
+
+\begin{document}
+\begin{tikzpicture}[node distance=12mm and 24mm, every node/.style={font=\footnotesize\sffamily}]
+
+  \node[block={42mm}{«block» Vehicle}] (veh) {
+    \textbf{Vehicle}
+    \nodepart{second}%
+    \textcolor{gray}{\scriptsize «part»}\\[-1pt]
+    engine: Engine [1]\\
+    wheels: Wheel [4]
+    \nodepart{third}%
+    \textcolor{gray}{\scriptsize «attribute»}\\[-1pt]
+    mass: MassValue [1]
+  };
+
+  \node[block={34mm}{«block» Engine}, right=of veh] (eng) {
+    \textbf{Engine}
+    \nodepart{second}%
+    \textcolor{gray}{\scriptsize «attribute»}\\[-1pt]
+    power: PowerValue [1]
+    \nodepart{third}\vphantom{x}
+  };
+
+  \node[block={34mm}{«block» Wheel}, below=of eng] (whl) {
+    \textbf{Wheel}
+    \nodepart{second}%
+    \textcolor{gray}{\scriptsize «attribute»}\\[-1pt]
+    diameter: LengthValue [1]
+    \nodepart{third}\vphantom{x}
+  };
+
+  % ports sit on the border
+  \node[port] (p_fuel) at ($(veh.east)+(0,4mm)$) {};
+  \node[port] (p_eng)  at ($(eng.west)+(0,4mm)$) {};
+  \node[port, label={[font=\scriptsize]left:fuelIn}] (p_eng2) at ($(eng.west)-(0,4mm)$) {};
+
+  % composition: diamond at the whole (Vehicle) end
+  \draw[comp] (eng.north) -- ++(0,6mm) -| node[pos=0.25, above, font=\scriptsize]{0..1} (veh.east);
+  \draw[comp] (whl.west) -| node[pos=0.25, below, font=\scriptsize]{4} (veh.south);
+
+  % item flow between ports
+  \draw[flow] (p_fuel) -- node[above, font=\scriptsize]{fuel} (p_eng);
+
+  % requirement + satisfy
+  \node[block={46mm}{«requirement» massLimit}, below=of veh] (req) {
+    \textbf{massLimit}
+    \nodepart{second}%
+    \textcolor{gray}{\scriptsize «attribute»}\\[-1pt]
+    id: "REQ-014"\\
+    text: "Vehicle mass shall not exceed 1800 kg."
+    \nodepart{third}\vphantom{x}
+  };
+  \draw[dep] (req.north) -- node[right, font=\scriptsize]{«satisfy»} (veh.south);
+
+\end{tikzpicture}
+\end{document}

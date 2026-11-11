@@ -1,0 +1,26 @@
+\documentclass[tikz,border=10pt]{standalone}
+\usepackage{sysml2tikz}
+\begin{document}
+\begin{tikzpicture}
+  \sysmldefnode[at={(106.0pt,-94.0pt)}]{veh}{part def}{Vehicle}{%
+    \sysmlcomp{attributes}brakePedalDepressed: Boolean\\mass :> mass\\velocity :> speed\\\sysmlcomp{ports}ignitionCmdPort: IgnitionCmdPort\\vehicleToRoadPort: VehicleToRoadPort\\\sysmlcomp{actions}\kw{perform} providePower\\\sysmlcomp{states}\kw{exhibit} vehicleStates\\
+  }
+
+  \sysmlusagenode[at={(110.0pt,-270.0pt)}]{vehb}{part}{vehicle\_b}{Vehicle}{%
+    \sysmlcomp{attributes}cargoMass \kw{default} 0 [kg]\\\redefines{:\textgreater{}\textgreater{}Vehicle::cargoMass}\\dryMass=sum(partMasses)\\\redefines{:\textgreater{}\textgreater{}Vehicle::dryMass}\\\sysmlcomp{parts}fuelTank: FuelTank\\\sysmlcomp{perform actions}providePower :> ActionTree::providePower\\\redefines{:\textgreater{}\textgreater{}Vehicle::providePower}\\
+  }
+
+  \sysmldefnode[at={(128.0pt,-410.0pt)}]{req}{requirement def}{MassRequirement}{%
+    \sysmlcomp{attributes}id = "REQ-014"\\text = "Vehicle dry mass shall not exceed 1800 kg."\\
+  }
+
+  \draw[sysml composition] (108.0pt,-212.0pt) -- (108.0pt,-184.0pt) -- (104.0pt,-184.0pt) -- (104.0pt,-156.0pt);
+  \node[font=\scriptsize, right] at (108.0pt,-198.0pt) {1};
+  \draw[sysml satisfy] (108.0pt,-328.0pt) -- (108.0pt,-356.0pt) -- (128.0pt,-356.0pt) -- (128.0pt,-384.0pt);
+  \node[font=\scriptsize, right] at (108.0pt,-342.0pt) {«satisfy»};
+  \draw[sysml itemflow] (212.0pt,-92.0pt) -- (212.0pt,-180.0pt) -- (236.0pt,-180.0pt) -- (236.0pt,-268.0pt) -- (220.0pt,-268.0pt);
+  \node[font=\scriptsize, right] at (212.0pt,-136.0pt) {fuel};
+  \sysmlportat{veh-p-east}{(180.0pt,-92.0pt)}{fuelIn}{above right}
+  \sysmlportat{vehb-p-east}{(188.0pt,-268.0pt)}{fuelOut}{above right}
+\end{tikzpicture}
+\end{document}

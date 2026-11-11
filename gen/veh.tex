@@ -1,0 +1,23 @@
+\documentclass[tikz,border=10pt]{standalone}
+\usepackage{sysml2tikz}
+\begin{document}
+\begin{tikzpicture}
+  \sysmldefnode[at={(70.0pt,-54.0pt)}]{Engine}{part def}{Engine}{%
+    \sysmlcomp{attributes}power : PowerValue\\
+  }
+
+  \sysmldefnode[at={(74.0pt,-180.0pt)}]{Vehicle}{part def}{Vehicle}{%
+    \sysmlcomp{attributes}mass : MassValue\\velocity : SpeedValue\\\sysmlcomp{parts}engine : Engine [1]\\wheels : Wheel [4]\\\sysmlcomp{ports}fuelIn : FuelPort\\
+  }
+
+  \sysmldefnode[at={(184.0pt,-54.0pt)}]{Wheel}{part def}{Wheel}{%
+    \sysmlcomp{attributes}diameter : LengthValue\\
+  }
+
+  \sysmlusagenode[at={(314.0pt,-54.0pt)}]{vehicle_b}{part}{vehicle\_b}{Vehicle}{%
+    \sysmlcomp{attributes}\redefines{:\textgreater{}\textgreater{} cargoMass}\\
+  }
+
+  \draw[sysml composition] (312.0pt,-76.0pt) -- (312.0pt,-104.0pt) -- (72.0pt,-104.0pt) -- (72.0pt,-132.0pt);
+\end{tikzpicture}
+\end{document}

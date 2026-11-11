@@ -1,0 +1,86 @@
+{
+  "node_distance": "14mm",
+  "nodes": [
+    {
+      "id": "Engine",
+      "kind": "part def",
+      "name": "Engine",
+      "compartments": [
+        {
+          "label": "attributes",
+          "rows": [
+            "power : PowerValue"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "Vehicle",
+      "kind": "part def",
+      "name": "Vehicle",
+      "compartments": [
+        {
+          "label": "attributes",
+          "rows": [
+            "mass : MassValue",
+            "velocity : SpeedValue"
+          ]
+        },
+        {
+          "label": "parts",
+          "rows": [
+            "engine : Engine [1]",
+            "wheels : Wheel [4]"
+          ]
+        },
+        {
+          "label": "ports",
+          "rows": [
+            "fuelIn : FuelPort"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "Wheel",
+      "kind": "part def",
+      "name": "Wheel",
+      "compartments": [
+        {
+          "label": "attributes",
+          "rows": [
+            "diameter : LengthValue"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "vehicle_b",
+      "kind": "part",
+      "name": "vehicle_b",
+      "type": "Vehicle",
+      "compartments": [
+        {
+          "label": "attributes",
+          "rows": [
+            ":>> cargoMass"
+          ]
+        }
+      ]
+    }
+  ],
+  "ports": [],
+  "edges": [
+    {
+      "src": "vehicle_b",
+      "dst": "Vehicle",
+      "style": "composition"
+    }
+  ],
+  "projection_notes": {
+    "skipped_members": [
+      "Action: part"
+    ],
+    "why": "sysmlpy does not retain a name for these members (e.g. a bare `perform x;` parses to 'perform action ;'), so there is no row to print"
+  }
+}

@@ -1,0 +1,58 @@
+\documentclass[tikz,border=10pt]{standalone}
+\usepackage{sysml2tikz}
+\begin{document}
+\begin{tikzpicture}[node distance=12mm]
+
+  % ---- «part def» Vehicle  (corpus fig-57: SQUARE corners) ---------------
+  \sysmldefnode[at={(0,0)}]{veh}{part def}{Vehicle}{%
+    \sysmlcomp{attributes}
+    brakePedalDepressed: Boolean\\
+    mass\,:\textgreater\, mass\\
+    velocity\,:\textgreater\, speed\\
+    \sysmlcomp{ports}
+    ignitionCmdPort: IgnitionCmdPort\\
+    vehicleToRoadPort: VehicleToRoadPort\\
+    \sysmlcomp{actions}
+    \kw{perform} providePower\\
+    \sysmlcomp{states}
+    \kw{exhibit} vehicleStates\\
+  }
+
+  % ---- «part» vehicle_b : Vehicle  (corpus fig-61: ROUNDED corners) ------
+  \sysmlusagenode[below=of veh]{vehb}{part}{vehicle\_b}{Vehicle}{%
+    \sysmlcomp{attributes}
+    cargoMass \kw{default} 0 [kg]\\
+    \redefines{:>>Vehicle::cargoMass}\\
+    dryMass=sum(partMasses)\\
+    \redefines{:>>Vehicle::dryMass}\\
+    \sysmlcomp{parts}
+    fuelTank: FuelTank\\
+    \sysmlcomp{perform actions}
+    providePower\,:\textgreater\, ActionTree::providePower\\
+    \redefines{:>>Vehicle::providePower}\\
+  }
+
+  % ---- «requirement def» (third kind, same header machinery) ------------
+  \sysmldefnode[below=of vehb]{req}{requirement def}{MassRequirement}{%
+    \sysmlcomp{attributes}
+    id = "REQ-014"\\
+    text = "Vehicle dry mass shall not exceed 1800 kg."\\
+  }
+
+  % ---- relationships ----------------------------------------------------
+  % composition: usage composes the definition's part tree; diamond at whole end
+  \draw[sysml composition] (vehb.north) --
+        node[right, font=\scriptsize, pos=0.55]{1} (veh.south);
+
+  % satisfy: usage satisfies the requirement
+  \draw[sysml satisfy] (vehb.south) --
+        node[right, font=\scriptsize, pos=0.5]{«satisfy»} (req.north);
+
+  % ports on the borders, with an item flow between them
+  \sysmlport{veh}{east}{fuelIn}{above right}
+  \sysmlport{vehb}{east}{fuelOut}{above right}
+  \draw[sysml itemflow] (veh-p-east) to[out=0, in=0, looseness=1.15]
+        node[right, font=\scriptsize, pos=0.5]{fuel} (vehb-p-east);
+
+\end{tikzpicture}
+\end{document}

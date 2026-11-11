@@ -1,0 +1,115 @@
+% SPDX-License-Identifier: MPL-2.0 OR LPPL-1.3c
+% Copyright (c) 2026 Jon R. Fox and Hermes Agent
+%
+% This file may be used under either of two licences, at your option:
+%   * the LaTeX Project Public License, version 1.3c or later (LICENSES/LPPL-1.3c.txt)
+%     — the branch under which the package can live on CTAN and in TeX Live;
+%   * the Mozilla Public License, version 2.0 (LICENSES/MPL-2.0.txt).
+%
+% sysml2tikz.sty — a SysML v2 notation layer on plain TikZ.
+%
+% Grounded in the OMG SysML v2.1 reference-implementation figures
+% (SysML-v2-Release/doc/images/sysml/): fig-57 "Part Definition for Vehicle"
+% (square-cornered definition, keyword + name header, italic centred
+% compartment labels) and fig-61 "Part Usage for vehicle_b" (ROUNDED corners,
+% "name: Type" header, ':>>' redefinition rows, 'default' / '=' value rows,
+% verb-prefixed compartment labels such as "perform actions").
+%
+% Distinctions this file encodes:
+%   definition : square corners, header = keyword + name, compartments are
+%                bare nouns (attributes, ports, actions, states)
+%   usage      : rounded corners, header = keyword + "name: Type", compartment
+%                labels keep the verb (perform actions, exhibit states) and
+%                rows may carry ':>>Owner::feature', 'default', '=' bindings
+%
+% Author: Jon R. Fox + Hermes Agent. Licence: MPL-2.0.
+\NeedsTeXFormat{LaTeX2e}
+\ProvidesPackage{sysml2tikz}[2026/11/11 v0.1 SysML v2 notation for TikZ]
+
+\RequirePackage{tikz}
+\usetikzlibrary{arrows.meta,positioning,calc,fit,shapes.geometric}
+
+% ---------------------------------------------------------------- dimensions
+\newlength{\sysmlrowsep}
+\setlength{\sysmlrowsep}{2pt}
+\newlength{\sysmlradius}
+\setlength{\sysmlradius}{4.5pt}
+
+% ------------------------------------------------------------------- styles
+\tikzset{
+  % a definition: square corners (corpus fig-57)
+  sysml def box/.style={
+    draw, thick, fill=white, rectangle, rounded corners=0pt,
+    inner sep=2.6pt, align=left, font=\footnotesize\sffamily
+  },
+  % a usage: rounded corners (corpus fig-61)
+  sysml usage box/.style={
+    draw, thick, fill=white, rectangle, rounded corners=\sysmlradius,
+    inner sep=2.6pt, align=left, font=\footnotesize\sffamily
+  },
+  sysml frame/.style={
+    draw, thick, fill=white, rectangle, inner sep=10pt, font=\footnotesize\sffamily
+  },
+  sysml port/.style={
+    draw, fill=white, thick, rectangle, minimum size=2.4mm, inner sep=0pt
+  },
+  sysml edge/.style={thick, draw=black},
+  % composition (whole end carries the filled diamond)
+  sysml composition/.style={sysml edge, -{Diamond[length=3.2mm,width=2.4mm,fill=black]}},
+  % directed reference / item flow
+  sysml reference/.style={sysml edge, -{Stealth[length=2.6mm]}},
+  sysml itemflow/.style={sysml edge, dashed, -{Stealth[length=2.4mm]}},
+  % satisfy / dependency
+  sysml satisfy/.style={sysml edge, densely dotted, -{Stealth[length=2.4mm]}},
+  sysml gen/.style={sysml edge, -{Triangle[length=3mm,width=3mm,open,fill=white]}},
+}
+
+% ------------------------------------------------------------- header pieces
+% «keyword» — italic inside guillemets, as printed in the corpus
+\newcommand{\sysmlkw}[1]{\textit{«#1»}}
+% definition header: keyword line, then centred name, then a rule
+\newcommand{\sysmlhead}[2]{%
+  \multicolumn{1}{c}{\sysmlkw{#1}}\\[-\sysmlrowsep]
+  \multicolumn{1}{c}{\large\sffamily #2}\\[1.5pt]}
+% usage header: keyword line, then centred "name : Type", then a rule
+\newcommand{\sysmlheadusage}[2]{%
+  \multicolumn{1}{c}{\sysmlkw{#1}}\\[-\sysmlrowsep]
+  \multicolumn{1}{c}{\large\sffamily #2}\\[1.5pt]}
+% compartment label: rule + centred italic label
+\newcommand{\sysmlcomp}[1]{\hline\multicolumn{1}{c}{\itshape #1}\\[-\sysmlrowsep]}
+% member keyword (perform, exhibit, default, allocate ...) — bold in corpus
+\newcommand{\kw}[1]{\textbf{#1}}
+% a redefinition row, printed italic in the corpus: ':>>Vehicle::mass'
+\newcommand{\redefines}[1]{\textit{#1}}
+
+% --------------------------------------------------------------- block nodes
+% \sysmldefnode[<tikz placement opts>]{<node id>}{<kind>}{<name>}{<body>}
+\newcommand{\sysmldefnode}[5][]{%
+  \node[sysml def box, #1] (#2) {\begin{tabular}{@{}l@{}}%
+    \sysmlhead{#3}{#4}#5%
+  \end{tabular}};}
+
+% \sysmlusagenode[<tikz placement opts>]{<id>}{<kind>}{<name>}{<type>}{<body>}
+\newcommand{\sysmlusagenode}[6][]{%
+  \node[sysml usage box, #1] (#2) {\begin{tabular}{@{}l@{}}%
+    \sysmlheadusage{#3}{#4\,:\,#5}#6%
+  \end{tabular}};}
+
+% ---------------------------------------------------------------- ports
+% \sysmlport{<node>}{<anchor or angle>}{<label>}{<label side>}
+\newcommand{\sysmlport}[4]{%
+  \node[sysml port, label={[font=\scriptsize\sffamily, inner sep=1pt]#4:#3}]
+    (#1-p-#2) at (#1.#2) {};}
+
+% \sysmlportat{<node id>}{(x,y)}{<label>}{<label anchor>} — used by the layout
+% adapter, which knows the routed dock coordinates instead of a bare side.
+\newcommand{\sysmlportat}[4]{%
+  \node[sysml port, label={[font=\scriptsize\sffamily, inner sep=1pt]#4:#3}]
+    (#1) at #2 {};}
+
+% ---------------------------------------------------------------- framing
+% \sysmlframe{<id>}{<title>}{<fit targets>}
+\newcommand{\sysmlframenode}[3]{%
+  \node[sysml frame, fit=#3, label={[font=\scriptsize\sffamily,anchor=north]north:{#2}}] (#1) {};}
+
+\endinput

@@ -1,0 +1,90 @@
+{
+  "node_distance": "12mm",
+  "nodes": [
+    {
+      "id": "veh",
+      "kind": "part def",
+      "name": "Vehicle",
+      "place": "at={(0,0)}",
+      "compartments": [
+        {
+          "label": "attributes",
+          "rows": [
+            "brakePedalDepressed: Boolean",
+            "mass :> mass",
+            "velocity :> speed"
+          ]
+        },
+        {
+          "label": "ports",
+          "rows": [
+            "ignitionCmdPort: IgnitionCmdPort",
+            "vehicleToRoadPort: VehicleToRoadPort"
+          ]
+        },
+        {
+          "label": "actions",
+          "rows": ["*perform* providePower"]
+        },
+        {
+          "label": "states",
+          "rows": ["*exhibit* vehicleStates"]
+        }
+      ]
+    },
+    {
+      "id": "vehb",
+      "kind": "part",
+      "name": "vehicle_b",
+      "type": "Vehicle",
+      "place": "below=of veh",
+      "compartments": [
+        {
+          "label": "attributes",
+          "rows": [
+            "cargoMass *default* 0 [kg]",
+            ":>>Vehicle::cargoMass",
+            "dryMass=sum(partMasses)",
+            ":>>Vehicle::dryMass"
+          ]
+        },
+        {
+          "label": "parts",
+          "rows": ["fuelTank: FuelTank"]
+        },
+        {
+          "label": "perform actions",
+          "rows": [
+            "providePower :> ActionTree::providePower",
+            ":>>Vehicle::providePower"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "req",
+      "kind": "requirement def",
+      "name": "MassRequirement",
+      "place": "below=of vehb",
+      "compartments": [
+        {
+          "label": "attributes",
+          "rows": [
+            "id = \"REQ-014\"",
+            "text = \"Vehicle dry mass shall not exceed 1800 kg.\""
+          ]
+        }
+      ]
+    }
+  ],
+  "ports": [
+    {"node": "veh", "side": "east", "name": "fuelIn", "label_side": "above right"},
+    {"node": "vehb", "side": "east", "name": "fuelOut", "label_side": "above right"}
+  ],
+  "edges": [
+    {"src": "vehb", "dst": "veh", "style": "composition", "label": "1"},
+    {"src": "vehb", "dst": "req", "style": "satisfy", "label": "\u00absatisfy\u00bb"},
+    {"src": "veh", "src_port": "east", "dst": "vehb", "dst_port": "east",
+     "style": "itemflow", "label": "fuel", "route": "arc-right"}
+  ]
+}

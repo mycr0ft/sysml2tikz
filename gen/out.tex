@@ -1,0 +1,31 @@
+\documentclass[tikz,border=10pt]{standalone}
+\usepackage{sysml2tikz}
+\begin{document}
+\begin{tikzpicture}[node distance=12mm]
+
+  \sysmldefnode[at={(0,0)}]{veh}{part def}{Vehicle}{%
+    \sysmlcomp{attributes}brakePedalDepressed: Boolean\\mass :> mass\\velocity :> speed\\\sysmlcomp{ports}ignitionCmdPort: IgnitionCmdPort\\vehicleToRoadPort: VehicleToRoadPort\\\sysmlcomp{actions}\kw{perform} providePower\\\sysmlcomp{states}\kw{exhibit} vehicleStates\\
+  }
+
+  \sysmlusagenode[below=of veh]{vehb}{part}{vehicle\_b}{Vehicle}{%
+    \sysmlcomp{attributes}cargoMass \kw{default} 0 [kg]\\\redefines{:\textgreater{}\textgreater{}Vehicle::cargoMass}\\dryMass=sum(partMasses)\\\redefines{:\textgreater{}\textgreater{}Vehicle::dryMass}\\\sysmlcomp{parts}fuelTank: FuelTank\\\sysmlcomp{perform actions}providePower :> ActionTree::providePower\\\redefines{:\textgreater{}\textgreater{}Vehicle::providePower}\\
+  }
+
+  \sysmldefnode[below=of vehb]{req}{requirement def}{MassRequirement}{%
+    \sysmlcomp{attributes}id = "REQ-014"\\text = "Vehicle dry mass shall not exceed 1800 kg."\\
+  }
+
+
+  \sysmlport{veh}{east}{fuelIn}{above right}
+
+  \sysmlport{vehb}{east}{fuelOut}{above right}
+
+
+  \draw[sysml composition] (vehb) -- node[right, font=\scriptsize, pos=0.5]{1} (veh);
+
+  \draw[sysml satisfy] (vehb) -- node[right, font=\scriptsize, pos=0.5]{«satisfy»} (req);
+
+  \draw[sysml itemflow] (veh-p-east) to[out=0, in=0, looseness=1.15] node[right, font=\scriptsize, pos=0.5]{fuel} (vehb-p-east);
+
+\end{tikzpicture}
+\end{document}
