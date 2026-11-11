@@ -183,7 +183,11 @@ def main(argv: list[str]) -> int:
         import sysmlpy
     except ImportError:                    # dev checkout without an install
         sys.path.insert(0, os.path.expanduser("~/proj/sysmlpy/src"))
-        import sysmlpy
+        try:
+            import sysmlpy
+        except ImportError as exc:
+            raise SystemExit(
+                "project needs sysmlpy (pip install 'sysml2tikz[parse]'): %s" % exc)
 
     with open(argv[1], encoding="utf-8") as fh:
         model = sysmlpy.loads(fh.read())

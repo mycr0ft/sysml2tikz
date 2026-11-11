@@ -124,7 +124,11 @@ def layout(model: dict, sizes: dict[str, tuple[float, float]], scale: float,
         from diagramboxes.layout import Diagram
     except ImportError:                    # dev checkout without an install
         sys.path.insert(0, os.path.expanduser("~/proj/diagramboxes"))
-        from diagramboxes.layout import Diagram
+        try:
+            from diagramboxes.layout import Diagram
+        except ImportError as exc:
+            raise SystemExit(
+                "layout needs diagramboxes (pip install 'sysml2tikz[layout]'): %s" % exc)
 
     d = Diagram()
     by_id = {}
