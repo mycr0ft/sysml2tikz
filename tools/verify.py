@@ -153,6 +153,15 @@ def gate_vision() -> None:
         fails.append("vision: no score returned (ollama unavailable or model silent)")
 
 
+def gate_routing() -> None:
+    r = run([sys.executable, os.path.join(ROOT, "tools", "check_routing.py")])
+    if r.returncode != 0:
+        detail = [l for l in r.stdout.splitlines() if l.startswith("FAIL")] or ["routing gate failed"]
+        fails.append("routing: %s" % "; ".join(detail))
+    else:
+        notes.append("routing: no edge crosses a foreign box")
+
+
 def gate_rules() -> None:
     r = run([sys.executable, os.path.join(ROOT, "tools", "render_rules.py"), "--check"])
     if r.returncode != 0:
@@ -177,6 +186,7 @@ def main(argv: list[str]) -> int:
     gate_golden()
     gate_notation()
     gate_rules()
+    gate_routing()
     gate_compile()
     gate_geometry()
     if "--vision" in argv:

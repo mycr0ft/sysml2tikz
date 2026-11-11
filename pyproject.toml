@@ -57,4 +57,5 @@ include = [
   "examples",
   "gen/model.json",
   "tools/verify.py",
+  "tools/check_routing.py",
 ]
