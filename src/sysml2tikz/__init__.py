@@ -14,12 +14,25 @@ Two halves, usable separately:
 Nothing here is required to use the ``.sty``, and the ``.sty`` is not required
 to emit IR.
 """
+import os
 from importlib.resources import files
 
-__version__ = "0.0.1"
+__version__ = "0.0.2"
 
 def sty_path() -> str:
-    """Absolute path of the bundled ``sysml2tikz.sty`` (for TEXINPUTS)."""
-    return str(files(__name__).joinpath("sysml2tikz.sty"))
+    """Absolute path of ``sysml2tikz.sty``.
+
+    An installed wheel carries the file inside the package (force-included at
+    build time from the repo root); a source checkout does not, so fall back to
+    the canonical file at the repo root.
+    """
+    packaged = files(__name__).joinpath("sysml2tikz.sty")
+    if packaged.is_file():
+        return str(packaged)
+    root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    candidate = os.path.join(root, "sysml2tikz.sty")
+    if os.path.isfile(candidate):
+        return candidate
+    raise FileNotFoundError("sysml2tikz.sty not found (installed package or repo root)")
 
 __all__ = ["__version__", "sty_path"]

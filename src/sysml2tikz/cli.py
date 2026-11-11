@@ -6,6 +6,7 @@
     sysml2tikz layout   model.json out.tex     IR -> measured + routed .tex
     sysml2tikz project  model.sysml out.json   SysML v2 text -> IR
     sysml2tikz sty                             print the bundled .sty path
+    sysml2tikz install-sty                     copy it into TEXMFHOME (TeX Live/MiKTeX)
     sysml2tikz version
 """
 from __future__ import annotations
@@ -32,6 +33,9 @@ def main(argv: list[str] | None = None) -> int:
         from . import sty_path
         print(sty_path())
         return 0
+    if cmd == "install-sty":
+        from .install import install
+        return install(rest)
     if cmd == "emit":
         from .emit import main as run
         return run(["emit"] + rest)

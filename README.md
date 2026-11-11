@@ -16,15 +16,24 @@ Two things live here:
 Two independent doors:
 
 ```bash
-# LaTeX only — drop the .sty in your document's directory (or install it from CTAN
-# once the package is accepted), then:
-\usepackage{sysml2tikz}
+# LaTeX only, option A — put the .sty beside your document
+#   (from CTAN once the package is accepted, or copy it out of the Python package)
+
+# LaTeX only, option B — install once into your TeX user tree, then it is found
+# from every directory, no copying per document:
+pip install sysml2tikz
+sysml2tikz install-sty          # -> $TEXMFHOME/tex/latex/sysml2tikz/sysml2tikz.sty
+kpsewhich sysml2tikz.sty        # sanity check
 
 # Python — the generator; the wheel carries the same .sty
 pip install sysml2tikz
-sysml2tikz emit model.json out.tex --copy-sty   # --copy-sty puts the .sty beside the output
-tectonic out.tex
+sysml2tikz emit model.json out.tex --copy-sty   # portable: .sty lands beside the output
+tectonic out.tex                                # or pdflatex/lualatex/latexmk
 ```
+
+With TeX Live, `install-sty` needs the picture and extra packages present:
+`texlive-pictures` (pgf/TikZ) and `texlive-latex-extra` (`standalone.cls`,
+`xstring`). `tectonic` needs none of that — it fetches what a document uses.
 
 `--copy-sty` exists because tectonic resolves packages from its own bundle rather
 than from `TEXINPUTS`, and a plain TeX Live only finds `sysml2tikz.sty` after CTAN

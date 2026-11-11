@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "sysml2tikz"
-version = "0.0.1"
+version = "0.0.2"
 description = "SysML v2 notation for LaTeX/TikZ: a .sty notation layer plus a model-to-figure pipeline"
 readme = "README.md"
 requires-python = ">=3.10"
