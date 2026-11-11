@@ -8,3 +8,4 @@ dist/
 *.egg-info/
 *.pdf
 !sysml2tikz.pdf
+__pycache__/
