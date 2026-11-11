@@ -153,6 +153,18 @@ def gate_vision() -> None:
         fails.append("vision: no score returned (ollama unavailable or model silent)")
 
 
+def gate_rules() -> None:
+    r = run([sys.executable, os.path.join(ROOT, "tools", "render_rules.py"), "--check"])
+    if r.returncode != 0:
+        fails.append("rules: documents stale — %s" % (r.stdout.strip().splitlines() or [""])[0])
+    r2 = run([sys.executable, os.path.join(ROOT, "tools", "check_rules.py")])
+    tail = [l for l in r2.stdout.strip().splitlines() if l.strip()][-1:] or [""]
+    if r2.returncode != 0:
+        fails.append("rules: machine checks failed — %s" % tail[0])
+    else:
+        notes.append("rules: documents current, machine checks %s" % tail[0].lower())
+
+
 def gate_notation() -> None:
     r = run([sys.executable, os.path.join(ROOT, "tools", "render_notation.py"), "--check"])
     if r.returncode != 0:
@@ -164,6 +176,7 @@ def gate_notation() -> None:
 def main(argv: list[str]) -> int:
     gate_golden()
     gate_notation()
+    gate_rules()
     gate_compile()
     gate_geometry()
     if "--vision" in argv:

@@ -193,7 +193,13 @@ def emit(model: dict, d, by_id, ports, scale: float, out_path: str) -> None:
         coords = " -- ".join("(%.1fpt,%.1fpt)" % p for p in pts)
         label = edge.get("label")
         if label:
-            lx, ly, _ = label_at(db_edge.waypoints)
+            # D8: near the source end for composition, mid-edge otherwise
+            pts_db = db_edge.waypoints
+            if style == "composition" and len(pts_db) >= 2:
+                (x1, y1), (x2, y2) = pts_db[0], pts_db[1]
+                lx, ly = x1 + (x2 - x1) * 0.15, y1 + (y2 - y1) * 0.15
+            else:
+                lx, ly, _ = label_at(db_edge.waypoints)
             lines.append(r"  \draw[sysml %s] %s;"
                          % (style, coords.replace(
                              " -- ", " -- ", 1)))

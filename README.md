@@ -78,6 +78,16 @@ routed and rendered:
 
 ![from sysml model](docs/figures/fig-from-sysml-model.png)
 
+## Diagramming rules for agents
+
+[`docs/rules/`](docs/rules/README.md) is the prescriptive half: intent → view kind
+([01](docs/rules/01-diagram-selection.md)), the hard invariants D1–D14 with a
+correct and a wrong form ([02](docs/rules/02-drawing-rules.md)), eight minimal
+skeletons ([03](docs/rules/03-common-patterns.md)), and a yes/no checklist to run
+before returning a figure ([04](docs/rules/04-validation-checklist.md)). Rules
+D1–D4 and D6–D11 are machine-checked by `tools/check_rules.py`, which reads the
+notation IR, the emitted `.tex`, the `.sty` styles and the layout geometry.
+
 ## Notation cards for vision models
 
 [`docs/notation/`](docs/notation/index.md) is a description of every SysML v2

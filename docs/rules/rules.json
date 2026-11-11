@@ -1,0 +1,161 @@
+{
+  "version": "0.1",
+  "about": "Hard invariants for drawing SysML v2 diagrams. These are the rules a diagram violates or it does not — the equivalent of the textual prompting rules, but for pictures. Each rule states what to draw, why the notation requires it, a correct and a wrong form, and whether a machine can check it (and how). Evidence is a figure from the OMG SysML v2 reference implementation or one of this repo's own renders.",
+  "conventions": "✅ correct · ❌ wrong · ⚠️ gotcha. Rule ids are stable (D1, D2, …) so a checklist can cite them. `checkable` values: `ir` (a machine check exists against the notation IR / emitted .tex), `geometry` (checkable from box and port coordinates), `visual` (needs a human or a vision model).",
+  "rules": [
+    {
+      "id": "D1",
+      "area": "definition vs usage",
+      "statement": "Draw a definition with SQUARE corners and a usage with ROUNDED corners.",
+      "why": "The keyword line is small; the corner is visible at a glance and is the reference implementation's only reliable shape-level tell.",
+      "correct": "«part def» Vehicle — square box\n«part» vehicle_b : Vehicle — rounded box",
+      "wrong": "both boxes drawn the same shape, so the reader must zoom to tell a type from a role",
+      "checkable": "ir",
+      "check": "def nodes use the square-corner macro, usage nodes the rounded one",
+      "evidence": "fig-57 vs fig-61"
+    },
+    {
+      "id": "D2",
+      "area": "definition vs usage",
+      "statement": "A definition's header is its name; a usage's header is `name : Type`. Put the type in the header, never in a compartment row.",
+      "why": "Typing a usage is what makes it a usage of something; a row cannot express it and readers will not find it.",
+      "correct": "«part»\nvehicle_b : Vehicle",
+      "wrong": "«part»\nvehicle_b\n  type : Vehicle",
+      "checkable": "ir",
+      "check": "usage nodes carry a non-empty type",
+      "evidence": "fig-61"
+    },
+    {
+      "id": "D3",
+      "area": "boxes",
+      "statement": "Every box carries its keyword line inside it, in guillemets, italic: «part», «attribute def», «requirement». Do not rely on the reader inferring it from context.",
+      "why": "Without the keyword a box is ambiguous: the same rectangle is a part, an item or an occurrence depending on one word.",
+      "correct": "«requirement def»\nMassRequirement",
+      "wrong": "MassRequirement",
+      "checkable": "ir",
+      "check": "every node's kind is rendered as a keyword line",
+      "evidence": "fig-57, fig-70"
+    },
+    {
+      "id": "D4",
+      "area": "compartments",
+      "statement": "Separate compartments with a full-width rule and title each with an italic centred noun. On definitions use the bare noun (`attributes`, `ports`, `parts`); on usages use verb + noun (`perform actions`, `exhibit states`).",
+      "why": "The compartment title says what kind of membership the rows express; a bare noun on a usage hides that the rows are performed or exhibited.",
+      "correct": "attributes / parts / ports on a definition\nperform actions / exhibit states on a usage",
+      "wrong": "one undivided box of rows, or `actions` on a usage",
+      "checkable": "ir",
+      "check": "compartment labels follow the definition/usage table",
+      "evidence": "fig-57 vs fig-61"
+    },
+    {
+      "id": "D5",
+      "area": "rows",
+      "statement": "Express relationships in rows with the notation's own operators: `:>` subsetting, `:>>` redefinition, `=` binding, `default` for a default value, `[n]`/`[n..m]` for multiplicity. Never draw an arrow to say what a row says.",
+      "why": "Those operators are the model's semantics; an arrow between two rows cannot carry `:>>` and invents a connection the model does not have.",
+      "correct": "mass :> ISQBase::mass\n:>>Vehicle::cargoMass\nfuelMassMax :> ISQBase::mass = 60 [kg]",
+      "wrong": "mass —arrow→ ISQBase::mass",
+      "checkable": "visual",
+      "check": "—",
+      "evidence": "fig-61, fig-70"
+    },
+    {
+      "id": "D6",
+      "area": "ports",
+      "statement": "Draw a port as a small square straddling the box border, with the port name outside the box beside it. Show direction with a small chevron inside the square (`in` / `out`), not with an arrowhead on the connector.",
+      "why": "A port is a feature of the boundary, not an icon on the box; and in an interconnection view connectors carry no arrowheads, so the chevron is the only direction signal.",
+      "correct": "□ on the border, `fuelIn` written outside, `←` inside the square",
+      "wrong": "port drawn as a dot inside the box, or direction shown by an arrowhead on the connector",
+      "checkable": "geometry",
+      "check": "every port glyph centre lies within 2pt of its box wall",
+      "evidence": "fig-64, fig-66"
+    },
+    {
+      "id": "D7",
+      "area": "composition",
+      "statement": "Put the filled diamond at the WHOLE end. The part end gets no arrowhead and no diamond.",
+      "why": "The diamond marks ownership; putting it on the part end inverts the model, and readers take the diamond end as the owner.",
+      "correct": "Vehicle ◆——— Engine",
+      "wrong": "Vehicle ———◆ Engine   (ownership inverted)\nVehicle ◆———▶ Engine (diamond plus arrowhead)",
+      "checkable": "ir",
+      "check": "composition edges route to the whole node with the diamond style and no extra arrowhead",
+      "evidence": "fig-62, fig-70"
+    },
+    {
+      "id": "D8",
+      "area": "composition",
+      "statement": "Place a multiplicity at the end it quantifies: at the part end when the part is the many side, at the whole end when the whole is (as in a usage composed of one definition).",
+      "why": "A multiplicity floating near the middle reads as belonging to the relationship, not to an end.",
+      "correct": "frontAxleAssembly ◆——— frontWheels   2",
+      "wrong": "frontAxleAssembly ◆—2— frontWheels   (ambiguous end)",
+      "checkable": "ir",
+      "check": "labels on composition edges are attached as end labels, not mid-edge labels",
+      "evidence": "fig-62"
+    },
+    {
+      "id": "D9",
+      "area": "specialisation",
+      "statement": "Draw specialisation as a solid line with a HOLLOW triangle at the general type. One triangle may serve several subclasses joined by a bus.",
+      "why": "Filled triangles mean flow; a filled triangle here makes a type hierarchy look like a data flow.",
+      "correct": "FrontAxle △——— Axle   (hollow, pointing at Axle)",
+      "wrong": "FrontAxle ▲——— Axle   (filled triangle)",
+      "checkable": "ir",
+      "check": "generalisation edges use the hollow-triangle style",
+      "evidence": "fig-24, fig-72"
+    },
+    {
+      "id": "D10",
+      "area": "requirements",
+      "statement": "Give a requirement an id in angle brackets in its name line, and use `doc`, `attributes` and `constraints` compartments. Write `assume` and `require` in bold inside `constraints`.",
+      "why": "Requirements are read by reviewers looking for text and thresholds; prose in an untitled compartment is unreadable as a requirement.",
+      "correct": "«requirement»\n<1> vehicleMassRequirement : MassRequirement\n  doc  …\n  attributes  massRequired = 2000 [kg]\n  constraints  assume { fuelMassActual == fuelMassMax }",
+      "wrong": "«requirement» VehicleMass  {The vehicle shall weigh less than 2000 kg}",
+      "checkable": "ir",
+      "check": "requirement nodes carry an id and a doc/attributes compartment",
+      "evidence": "fig-70"
+    },
+    {
+      "id": "D11",
+      "area": "cross-cutting edges",
+      "statement": "Draw satisfy / verify / derive / allocate / perform / expose / import as DASHED or DOTTED edges carrying the keyword in guillemets as the label.",
+      "why": "These are not structural connections; drawing them solid makes them indistinguishable from composition and connector edges.",
+      "correct": "massTests - - «verify» - -▶ vehicleMassRequirement",
+      "wrong": "massTests ———▶ vehicleMassRequirement   (solid, unlabelled)",
+      "checkable": "ir",
+      "check": "cross-cutting edges use a dashed style and a keyword label",
+      "evidence": "fig-72, fig-73"
+    },
+    {
+      "id": "D12",
+      "area": "frames",
+      "statement": "When a diagram is enclosed in a frame, the header names the view kind (`ibd`, `act`, `stm`) or the owning element (`«part» vehicle_b : Vehicle`). A frame header describes the container, never the boxes inside.",
+      "why": "fig-67 is headed «use case» yet contains actions — the header says what the diagram is a view of. Agents that classify by header alone mislabel the contents.",
+      "correct": "«part» vehicle_b : Vehicle  →  contents are parts and ports\n«view» Vehicle States : State Transition View  →  contents are states",
+      "wrong": "«action»  →  contents are states (header contradicts contents)",
+      "checkable": "visual",
+      "check": "—",
+      "evidence": "fig-64, fig-67, fig-68"
+    },
+    {
+      "id": "D13",
+      "area": "marks",
+      "statement": "Use only SysML v2 marks. No crow's feet, no ERD multiplicities, no UML-style `*` for many, no activity pins, no stick figures inside a block.",
+      "why": "Borrowed notation reads as a different language; a crow's foot in a SysML diagram is a defect, not a dialect.",
+      "correct": "1 / 0..* / [1..4] as text labels at edge ends",
+      "wrong": "—< (crow's foot), * (UML many), ● inside a box for a pin",
+      "checkable": "visual",
+      "check": "—",
+      "evidence": "all corpus figures use text multiplicities"
+    },
+    {
+      "id": "D14",
+      "area": "metamodel",
+      "statement": "Do not present a specification (metamodel) figure as a diagram of a system. If the boxes carry bold class names, hollow triangles and `+/role 0..* {subsets …}` labels, it defines the language.",
+      "why": "Metamodel figures share the visual vocabulary but answer a different question; quoting one as a system design is a category error.",
+      "correct": "(in a design review) a parts tree, interconnection or flow\n(in the specification) ControlNode ◁— ForkNode",
+      "wrong": "using fig-33's TransitionUsage ladder to explain how a vehicle changes state",
+      "checkable": "visual",
+      "check": "—",
+      "evidence": "fig-24, fig-33"
+    }
+  ]
+}

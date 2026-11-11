@@ -113,8 +113,13 @@ def emit_edge(edge: dict) -> str:
         bits.append(r" --")
     label = edge.get("label")
     if label:
-        bits.append(r" node[%s, font=\scriptsize, pos=0.5]{%s}"
-                    % (edge.get("label_side", "right"), esc(label)))
+        # D8: a multiplicity labels the part end (nearer the source when the
+        # diamond is at the target), never the middle of the line.
+        pos = edge.get("label_pos")
+        if pos is None:
+            pos = 0.15 if style == "composition" else 0.5
+        bits.append(r" node[%s, font=\scriptsize, pos=%s]{%s}"
+                    % (edge.get("label_side", "right"), pos, esc(label)))
     bits.append(" (%s);\n" % dst)
     return "".join(bits)
 
