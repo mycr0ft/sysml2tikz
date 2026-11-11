@@ -41,7 +41,10 @@ jobs:
       - name: repository gates
         run: python3 tools/verify.py
 
+      # only meaningful for a release: on workflow_dispatch GITHUB_REF_NAME is a
+      # branch name, so the comparison would always fail
       - name: version must match the release tag
+        if: github.event_name == 'release'
         run: |
           tag="${GITHUB_REF_NAME#v}"
           pkg=$(grep -m1 '^__version__' src/sysml2tikz/__init__.py | cut -d'"' -f2)
@@ -69,6 +72,7 @@ jobs:
           print-hash: true
 
       - name: attach the artifacts to the release
+        if: github.event_name == 'release'
         env:
           GH_TOKEN: ${{ github.token }}
         run: gh release upload "$GITHUB_REF_NAME" dist/* --clobber
