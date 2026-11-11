@@ -22,7 +22,7 @@ jobs:
       url: https://pypi.org/p/sysml2tikz
     permissions:
       id-token: write      # the OIDC token PyPI trades for a short-lived upload credential
-      contents: read
+      contents: write      # gh release upload attaches the sdist/wheel to the release
     steps:
       - uses: actions/checkout@v4
 
