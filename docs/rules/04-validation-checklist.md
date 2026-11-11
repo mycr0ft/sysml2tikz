@@ -9,75 +9,75 @@ layout geometry; the rest need eyes or a vision model.
 
 ## A. Definition vs usage
 
-- [ ] **A1.** Draw a definition with SQUARE corners and a usage with ROUNDED corners **[auto]**
-- [ ] **A2.** A definition's header is its name; a usage's header is `name : Type`. Put the type in the header, never in a compartment row **[auto]**
+- [ ] **A1.** Draw a definition with SQUARE corners and a usage with ROUNDED corners **[auto]** (`rule D1`)
+- [ ] **A2.** A definition's header is its name; a usage's header is `name : Type`. Put the type in the header, never in a compartment row **[auto]** (`rule D2`)
 
 ---
 
 ## B. Boxes
 
-- [ ] **B1.** Every box carries its keyword line inside it, in guillemets, italic: «part», «attribute def», «requirement». Do not rely on the reader inferring it from context **[auto]**
+- [ ] **B1.** Every box carries its keyword line inside it, in guillemets, italic: «part», «attribute def», «requirement». Do not rely on the reader inferring it from context **[auto]** (`rule D3`)
 
 ---
 
 ## C. Compartments
 
-- [ ] **C1.** Separate compartments with a full-width rule and title each with an italic centred noun. On definitions use the bare noun (`attributes`, `ports`, `parts`); on usages use verb + noun (`perform actions`, `exhibit states`) **[auto]**
+- [ ] **C1.** Separate compartments with a full-width rule and title each with an italic centred noun. On definitions use the bare noun (`attributes`, `ports`, `parts`); on usages use verb + noun (`perform actions`, `exhibit states`) **[auto]** (`rule D4`)
 
 ---
 
 ## D. Rows
 
-- [ ] **D1.** Express relationships in rows with the notation's own operators: `:>` subsetting, `:>>` redefinition, `=` binding, `default` for a default value, `[n]`/`[n..m]` for multiplicity. Never draw an arrow to say what a row says
+- [ ] **D1.** Express relationships in rows with the notation's own operators: `:>` subsetting, `:>>` redefinition, `=` binding, `default` for a default value, `[n]`/`[n..m]` for multiplicity. Never draw an arrow to say what a row says (`rule D5`)
 
 ---
 
 ## E. Ports
 
-- [ ] **E1.** Draw a port as a small square straddling the box border, with the port name outside the box beside it. Show direction with a small chevron inside the square (`in` / `out`), not with an arrowhead on the connector **[auto]**
+- [ ] **E1.** Draw a port as a small square straddling the box border, with the port name outside the box beside it. Show direction with a small chevron inside the square (`in` / `out`), not with an arrowhead on the connector **[auto]** (`rule D6`)
 
 ---
 
 ## F. Composition
 
-- [ ] **F1.** Put the filled diamond at the WHOLE end. The part end gets no arrowhead and no diamond **[auto]**
-- [ ] **F2.** Place a multiplicity at the end it quantifies: at the part end when the part is the many side, at the whole end when the whole is (as in a usage composed of one definition) **[auto]**
+- [ ] **F1.** Put the filled diamond at the WHOLE end. The part end gets no arrowhead and no diamond **[auto]** (`rule D7`)
+- [ ] **F2.** Place a multiplicity at the end it quantifies: at the part end when the part is the many side, at the whole end when the whole is (as in a usage composed of one definition) **[auto]** (`rule D8`)
 
 ---
 
 ## G. Specialisation
 
-- [ ] **G1.** Draw specialisation as a solid line with a HOLLOW triangle at the general type. One triangle may serve several subclasses joined by a bus **[auto]**
+- [ ] **G1.** Draw specialisation as a solid line with a HOLLOW triangle at the general type. One triangle may serve several subclasses joined by a bus **[auto]** (`rule D9`)
 
 ---
 
 ## H. Requirements
 
-- [ ] **H1.** Give a requirement an id in angle brackets in its name line, and use `doc`, `attributes` and `constraints` compartments. Write `assume` and `require` in bold inside `constraints` **[auto]**
+- [ ] **H1.** Give a requirement an id in angle brackets in its name line, and use `doc`, `attributes` and `constraints` compartments. Write `assume` and `require` in bold inside `constraints` **[auto]** (`rule D10`)
 
 ---
 
 ## I. Cross cutting edges
 
-- [ ] **I1.** Draw satisfy / verify / derive / allocate / perform / expose / import as DASHED or DOTTED edges carrying the keyword in guillemets as the label **[auto]**
+- [ ] **I1.** Draw satisfy / verify / derive / allocate / perform / expose / import as DASHED or DOTTED edges carrying the keyword in guillemets as the label **[auto]** (`rule D11`)
 
 ---
 
 ## J. Frames
 
-- [ ] **J1.** When a diagram is enclosed in a frame, the header names the view kind (`ibd`, `act`, `stm`) or the owning element (`«part» vehicle_b : Vehicle`). A frame header describes the container, never the boxes inside
+- [ ] **J1.** When a diagram is enclosed in a frame, the header names the view kind (`ibd`, `act`, `stm`) or the owning element (`«part» vehicle_b : Vehicle`). A frame header describes the container, never the boxes inside (`rule D12`)
 
 ---
 
 ## K. Marks
 
-- [ ] **K1.** Use only SysML v2 marks. No crow's feet, no ERD multiplicities, no UML-style `*` for many, no activity pins, no stick figures inside a block
+- [ ] **K1.** Use only SysML v2 marks. No crow's feet, no ERD multiplicities, no UML-style `*` for many, no activity pins, no stick figures inside a block (`rule D13`)
 
 ---
 
 ## L. Metamodel
 
-- [ ] **L1.** Do not present a specification (metamodel) figure as a diagram of a system. If the boxes carry bold class names, hollow triangles and `+/role 0..* {subsets …}` labels, it defines the language
+- [ ] **L1.** Do not present a specification (metamodel) figure as a diagram of a system. If the boxes carry bold class names, hollow triangles and `+/role 0..* {subsets …}` labels, it defines the language (`rule D14`)
 
 ---
 

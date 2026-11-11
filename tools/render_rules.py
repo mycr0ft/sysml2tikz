@@ -65,7 +65,8 @@ def render_checklist(doc: dict) -> str:
         out += ["---", "", "## %s. %s" % (letter, area.replace("-", " ").capitalize()), ""]
         for n, r in enumerate(sections[area], start=1):
             tag = " **[auto]**" if r.get("checkable", "visual") != "visual" else ""
-            out += ["- [ ] **%s%d.** %s%s" % (letter, n, r["statement"].rstrip("."), tag)]
+            # the gate cites its rule id, which is what the intro promises
+            out += ["- [ ] **%s%d.** %s%s (`rule %s`)" % (letter, n, r["statement"].rstrip("."), tag, r["id"])]
         out += [""]
     out += ["---", "",
             "## Summary of what a machine can enforce", "",
