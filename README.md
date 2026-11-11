@@ -21,6 +21,31 @@ pdftoppm -r 190 -png -singlefile out.pdf out      # review raster
 
 No system TeX required: `tectonic` fetches only what a document uses.
 
+## Figures
+
+All four are produced by this repo; the PNGs are 200 dpi rasters of the compiled PDFs.
+
+Hand-authored macros — the definition/usage distinction in one picture
+(`demo.tex`): square «part def», rounded «part», compartments, ports, composition,
+«satisfy».
+
+![definition and usage](docs/figures/fig-definition-and-usage.png)
+
+Same figure generated from a JSON notation IR (`gen/model.json` → `gen/emit_tex.py`) —
+nothing typed by hand:
+
+![generated from IR](docs/figures/fig-generated-from-ir.png)
+
+Laid out automatically: TeX-measured box sizes → diagramboxes' orthogonal router →
+absolute coordinates and polyline edges (`gen/laid_out.tex`):
+
+![routed layout](docs/figures/fig-routed-layout.png)
+
+End to end from SysML v2 text — `examples/vehicle.sysml` parsed by sysmlpy, projected,
+routed and rendered:
+
+![from sysml model](docs/figures/fig-from-sysml-model.png)
+
 ## The distinction this package exists for
 
 The corpus draws the two sides differently and the difference is semantic, not
