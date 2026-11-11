@@ -29,7 +29,9 @@ import sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 GEN = os.path.join(ROOT, "gen")
-TECTONIC = os.path.expanduser("~/.local/bin/tectonic")
+TECTONIC = (os.environ.get("TECTONIC")
+            or shutil.which("tectonic")
+            or os.path.expanduser("~/.local/bin/tectonic"))
 CORPUS = os.path.expanduser(
     "~/proj/third_party/SysML-v2-Release/doc/images/sysml")
 

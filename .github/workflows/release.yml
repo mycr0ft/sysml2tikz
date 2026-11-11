@@ -1,0 +1,74 @@
+name: release
+
+# Publishes to PyPI through OIDC trusted publishing: no API token lives in this
+# repo. PyPI must have a pending/active trusted publisher configured for
+#   owner mycr0ft · repo sysml2tikz · workflow release.yml · environment pypi
+# (pypi.org -> your project -> Publishing). Until that exists, this job's upload
+# step will fail at the OIDC exchange, and nothing else will.
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    environment:
+      name: pypi
+      url: https://pypi.org/p/sysml2tikz
+    permissions:
+      id-token: write      # the OIDC token PyPI trades for a short-lived upload credential
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v6
+        with:
+          python-version: "3.12"
+
+      - name: install tectonic
+        run: |
+          curl -fsSL -o tectonic.tar.gz \
+            "https://github.com/tectonic-typesetting/tectonic/releases/download/tectonic%400.17.0/tectonic-0.17.0-x86_64-unknown-linux-musl.tar.gz"
+          tar xzf tectonic.tar.gz tectonic
+          sudo install -m 755 tectonic /usr/local/bin/tectonic
+
+      # never publish something that does not build or does not render
+      - name: repository gates
+        run: python3 tools/verify.py
+
+      - name: version must match the release tag
+        run: |
+          tag="${GITHUB_REF_NAME#v}"
+          pkg=$(grep -m1 '^__version__' src/sysml2tikz/__init__.py | cut -d'"' -f2)
+          echo "tag=$tag pkg=$pkg"
+          [ "$tag" = "$pkg" ] || { echo "::error::tag $tag != __version__ $pkg"; exit 1; }
+
+      - name: build sdist + wheel
+        run: uv build
+
+      - name: verify the wheel carries the .sty
+        run: |
+          python3 - <<'PY'
+          import glob, sys, zipfile
+          whl = sorted(glob.glob("dist/*.whl"))[-1]
+          names = zipfile.ZipFile(whl).namelist()
+          if "sysml2tikz/sysml2tikz.sty" not in names:
+              sys.exit("::error::wheel is missing the bundled sysml2tikz.sty")
+          print(whl, "ok")
+          PY
+
+      - name: publish to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          packages-dir: dist/
+          print-hash: true
+
+      - name: attach the artifacts to the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release upload "$GITHUB_REF_NAME" dist/* --clobber

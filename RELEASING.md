@@ -1,6 +1,32 @@
 # Releasing
 
-## PyPI
+## PyPI — automated (preferred)
+
+Publishing runs in `.github/workflows/release.yml` on GitHub release, through
+**OIDC trusted publishing** — no API token is stored anywhere.
+
+One-time setup, in this order:
+
+1. Publish 0.0.1 by hand (already the plan) so the project exists on PyPI and the
+   name is yours.
+2. pypi.org → your project → *Publishing* → add a trusted publisher:
+   owner `mycr0ft`, repository `sysml2tikz`, workflow `release.yml`,
+   environment `pypi`.
+3. In the GitHub repo, confirm the `pypi` environment exists (Settings →
+   Environments); no secrets needed.
+
+Then every release is:
+
+```bash
+# bump both version fields, commit, then:
+git tag v0.0.2 && git push origin v0.0.2
+gh release create v0.0.2 --notes-file CHANGELOG.md     # triggers publish
+```
+
+The workflow refuses to publish if the tag disagrees with `__version__` or if
+`tools/verify.py` fails, and it attaches the sdist/wheel to the release.
+
+## PyPI — manual fallback
 
 ```bash
 uv build                       # -> dist/sysml2tikz-<ver>-py3-none-any.whl + .tar.gz
@@ -37,6 +63,15 @@ examples/
 Licence to select in the CTAN form: **LaTeX Project Public License 1.3c** (the
 `OR MPL-2.0` branch is ours; CTAN's list has no MPL entry).
 
-## GitHub
+## CI
 
-`gh release create v<ver> --notes-file CHANGELOG.md` once a changelog exists.
+`.github/workflows/ci.yml` runs on every push to `master` and on pull requests:
+build, install the wheel and exercise the CLI, then `tools/verify.py` (golden
+`.tex` diff, compile of the four documents, geometry sidecars) with a pinned
+tectonic 0.17.0. A tag push additionally runs `version-check`, which fails if the
+tag and the package version disagree.
+
+## GitHub releases
+
+`gh release create v<ver> --notes-file CHANGELOG.md` — and that is also the
+trigger for the PyPI publish.

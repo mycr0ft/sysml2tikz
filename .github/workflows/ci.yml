@@ -1,0 +1,69 @@
+name: ci
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  gates:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v6
+        with:
+          python-version: "3.12"
+
+      # The LaTeX gates need a TeX engine. Pinned URL: the same build the local
+      # gates were developed against, so CI and desktop agree.
+      - name: install tectonic
+        run: |
+          curl -fsSL -o tectonic.tar.gz \
+            "https://github.com/tectonic-typesetting/tectonic/releases/download/tectonic%400.17.0/tectonic-0.17.0-x86_64-unknown-linux-musl.tar.gz"
+          tar xzf tectonic.tar.gz tectonic
+          sudo install -m 755 tectonic /usr/local/bin/tectonic
+          tectonic --version
+
+      - name: build distribution
+        run: uv build
+
+      - name: install the wheel and exercise the CLI
+        run: |
+          uv venv .ci-venv --python 3.12
+          uv pip install --python .ci-venv/bin/python dist/*.whl
+          .ci-venv/bin/sysml2tikz version
+          .ci-venv/bin/sysml2tikz sty
+          mkdir -p /tmp/smoke && cd /tmp/smoke
+          "$GITHUB_WORKSPACE/.ci-venv/bin/sysml2tikz" emit \
+            "$GITHUB_WORKSPACE/gen/model.json" out.tex --copy-sty
+          tectonic out.tex
+
+      # golden .tex diff + compile of the committed documents + geometry sidecars
+      - name: repository gates
+        run: python3 tools/verify.py
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: sysml2tikz-dist
+          path: dist/*
+          if-no-files-found: error
+
+  version-check:
+    # a tag that disagrees with the package version is the classic release bug
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          python-version: "3.12"
+      - name: tag must equal __version__
+        run: |
+          tag="${GITHUB_REF_NAME#v}"
+          pkg=$(grep -m1 '^__version__' src/sysml2tikz/__init__.py | cut -d'"' -f2)
+          pyproj=$(grep -m1 '^version =' pyproject.toml | cut -d'"' -f2)
+          echo "tag=$tag pkg=$pkg pyproject=$pyproj"
+          [ "$tag" = "$pkg" ] && [ "$tag" = "$pyproj" ] || {
+            echo "::error::tag $tag != __version__ $pkg / pyproject $pyproj"; exit 1; }
