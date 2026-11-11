@@ -1,0 +1,58 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "sysml2tikz"
+version = "0.0.1"
+description = "SysML v2 notation for LaTeX/TikZ: a .sty notation layer plus a model-to-figure pipeline"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MPL-2.0 OR LPPL-1.3c" }
+authors = [{ name = "Jon R. Fox" }]
+keywords = ["sysml", "sysml-v2", "mbse", "tikz", "latex", "diagram", "uml"]
+classifiers = [
+  "Development Status :: 3 - Alpha",
+  "Intended Audience :: Science/Research",
+  "Programming Language :: Python :: 3",
+  "Topic :: Documentation",
+  "Topic :: Scientific/Engineering",
+  "Topic :: Text Processing :: Markup :: LaTeX",
+]
+dependencies = []
+
+[project.optional-dependencies]
+# parsing: SysML v2 text -> notation IR
+parse = ["sysmlpy"]
+# routing: TeX-measured sizes -> orthogonal coordinates
+layout = ["diagramboxes"]
+
+[project.urls]
+Homepage = "https://github.com/mycr0ft/sysml2tikz"
+Issues = "https://github.com/mycr0ft/sysml2tikz/issues"
+
+[project.scripts]
+sysml2tikz = "sysml2tikz.cli:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/sysml2tikz"]
+
+# the CTAN artifact ships inside the wheel, so `pip install sysml2tikz` puts the
+# .sty on disk; `sysml2tikz sty` prints its path for TEXINPUTS. Single source of
+# truth: the file at the repo root is the CTAN original, force-included here.
+[tool.hatch.build.targets.wheel.force-include]
+"sysml2tikz.sty" = "sysml2tikz/sysml2tikz.sty"
+
+[tool.hatch.build.targets.sdist]
+include = [
+  "src/sysml2tikz",
+  "sysml2tikz.sty",
+  "LICENSES",
+  "README.md",
+  "ARCHITECTURE.md",
+  "PIPELINE.md",
+  "docs/figures",
+  "examples",
+  "gen/model.json",
+  "tools/verify.py",
+]

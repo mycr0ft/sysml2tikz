@@ -11,6 +11,29 @@ Two things live here:
    router → absolute coordinates), `tools/verify.py` (golden diff, compile,
    geometry gates). See `PIPELINE.md`.
 
+## Install
+
+Two independent doors:
+
+```bash
+# LaTeX only — drop the .sty in your document's directory (or install it from CTAN
+# once the package is accepted), then:
+\usepackage{sysml2tikz}
+
+# Python — the generator; the wheel carries the same .sty
+pip install sysml2tikz
+sysml2tikz emit model.json out.tex --copy-sty   # --copy-sty puts the .sty beside the output
+tectonic out.tex
+```
+
+`--copy-sty` exists because tectonic resolves packages from its own bundle rather
+than from `TEXINPUTS`, and a plain TeX Live only finds `sysml2tikz.sty` after CTAN
+ships it. For a repo checkout the `gen/*.py` scripts are thin shims over
+`src/sysml2tikz/*`, so the commands in `PIPELINE.md` keep working with no install.
+
+Optional extras: `pip install "sysml2tikz[parse]"` (sysmlpy, for SysML text input)
+and `pip install "sysml2tikz[layout]"` (diagramboxes, for routed layout).
+
 ## Build
 
 ```bash
