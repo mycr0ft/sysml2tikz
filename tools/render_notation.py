@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -21,14 +22,16 @@ CARDS = os.path.join(NOTATION, "cards")
 
 
 def slug(name: str) -> str:
-    return name.lower().replace(" ", "-").replace("/", "-")
+    """Filesystem- and link-safe: parentheses would truncate a markdown link."""
+    return re.sub(r"[^a-z0-9]+", "-", name.lower()).strip("-")
 
 
 def render_card(view: dict) -> str:
     out = ["# %s" % view["view"], ""]
     if view.get("also_called"):
         out += ["Also called: " + ", ".join(view["also_called"]), ""]
-    out += ["SysML v2 view: `%s`" % view.get("sysml_v2_view", "n/a"), ""]
+    out += ["SysML v2 view: `%s`%s" % (view.get("sysml_v2_view", "n/a"),
+             "" if view.get("kind", "view") == "view" else "  ·  kind: **%s**" % view["kind"]), ""]
     out += ["## Purpose", "", view["purpose"].strip(), ""]
 
     frame = view.get("frame") or {}
@@ -92,6 +95,15 @@ def render_index(doc: dict) -> str:
                    "`%s`" % v["figure"] if v.get("figure") else "—",
                    "yes" if v.get("verified_against_figure") else "no")]
     out += ["", "## Reading order for an agent", "", doc["reading_order"].strip(), ""]
+    marks = doc.get("marks") or []
+    if marks:
+        out += ["## Marks glossary", "",
+                "| mark | means | gotcha |", "|---|---|---|"]
+        for m in marks:
+            out += ["| %s | %s | %s |" % (m.get("mark", ""), m.get("means", ""), m.get("gotcha", ""))]
+        out += [""]
+    if doc.get("coverage"):
+        out += ["## Coverage", "", doc["coverage"].strip(), ""]
     return "\n".join(out)
 
 

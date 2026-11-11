@@ -1,40 +1,451 @@
 {
-  "version": "0.1",
-  "about": "SysML v2 draws about a dozen kinds of diagram from one notation vocabulary. Two of them look almost identical at a glance (a parts tree and an interconnection view differ only by the connectors between ports), and several share the same rectangles. These cards describe what each kind looks like well enough for a vision model to classify it and read it, without the model text. Each card is grounded in a figure from the OMG SysML v2 reference implementation, and says so — or says it is not yet verified.",
-  "decision_tree": "1. Is there an enclosing frame with a header? Read the header's first word — it names the view kind: `ibd` (interconnection), `act` (action flow), `stm` (state transition), `uc` (use case), `req` (requirement), `vp` (viewpoint), `v` (view), `assume`/`assert` (constraint), `sd` (sequence). A frame with `«view»` and an `expose` note is a *view* — the diagram inside it is whatever the view renders.\n2. No frame, or a frame without a kind word? Then classify by content:\n   - small squares straddling box borders with `in`/`out` arrows, and lines joining square to square → interconnection view (ports + connectors).\n   - no squares, and each line ends in a filled diamond at one box → parts tree / composition (a BDD restricted to usages).\n   - boxes with `«part def»`/`«attribute def»` keyword lines and no connectors between boxes → definition view (a BDD of definitions).\n   - thick bars splitting one flow into several, plus a filled circle at the start and a ring-around-dot at the end → action flow.\n   - rounded rectangles named `X` with a small label in the corner, and arrows labelled `[guard]`/`event` between them → state transition.\n   - vertical dashed lines with boxed names on top and horizontal arrows between lifelines → sequence view.\n   - ovals with stick figures → use case view.\n   - boxes whose second compartment says `id =` and `text =`, with a dotted arrow labelled «satisfy» into them → requirement view.\n3. Text tells you the rest: `part def` vs `part`, `:>` (subset) vs `:>>` (redefine) vs `=` (bind), `[1..4]` multiplicities, `«allocate»`, `«satisfy»`, `«verify»`, `«derive»`.",
-  "reading_order": "Classify first (decision tree above), then read in this order: frame header → keyword lines inside boxes → box titles and typing → compartment titles → edge ends (which end has the diamond/triangle/arrow) → edge labels and guards → any `id =`/`text =` rows. Never infer a relationship's direction from label placement; read the arrowhead. When two boxes have the same name, the one with `def` in its keyword is the definition and the other is a usage of it.",
+  "version": "0.2",
+  "about": "SysML v2 draws about a dozen kinds of diagram from one notation vocabulary. Several look alike at a glance: a parts tree and an interconnection view differ only by port squares and connectors; a definition view and a parts tree share the same rectangles but not the same corners. These cards describe what each kind looks like well enough for a vision model to classify it and read it, without the model text. Every card names a figure from the OMG SysML v2 reference implementation and states whether it was checked against that figure at 1200 px with zoomed crops, or written from the view taxonomy and not yet verified.",
+  "decision_tree": "1. Is there an enclosing frame? Read the frame's header. A tab with a clipped corner carrying `«view» Name : Some View` is a rendered view whose *contents* are whatever the view renders (fig-68 is a state machine inside a «view» tab; fig-72's frames are plain bold names). A frame whose header is just `«part» name : Type` or `«action» name : Type` is an interconnection or action flow of that element.\n2. No frame? Then classify by marks, in this order:\n   - small hollow squares straddling box borders, with names written outside the box → interconnection view (ports).\n   - no squares, and every line has a small filled diamond at one box and nothing at the other → parts tree (or a variability tree if `«variation»`/`«variant»` appear).\n   - boxes with `«part def»`/`«attribute def»` keyword lines, square corners → definition view.\n   - thick dark bars splitting one flow, plus a `start`/`^done` pair → action flow.\n   - a `«requirement»` tree with `<1>`, `<2>` ids and italic `doc`/`attributes`/`constraints` compartments → requirement view.\n   - `«individual occurrence»`, `«snapshot occurrence»`, `«timeslice occurrence»` → object/instance view.\n   - bold single-line names in plain boxes with hollow triangles up the page and dense `+/role  0..*  {subsets ...}` labels → abstract-syntax (metamodel) diagram, not a user diagram.\n3. Text settles the rest: `part def` vs `part`, `:>` subset vs `:>>` redefine vs `=` bind, `[1..4]` multiplicity, `«satisfy»`/`«verify»`/`«require»`/`«perform»`/`«expose»`/`«import»` on dashed arrows.",
+  "reading_order": "Classify first (decision tree). Then: frame header → keyword line inside each box → box title and `: Type` → compartment titles → which end of each edge carries the diamond, triangle or arrow → edge labels and guards → `id =` / `text =` rows. Never infer direction from label placement; read the end marks. When two boxes share a name, the one with `def` in its keyword is the definition.",
+  "marks": [
+    {"mark": "small filled black diamond at one end", "means": "composition — that end owns the other. In a parts tree the diamond is at the PARENT.", "gotcha": "on diagonal lines the rotated diamond reads as a small black square"},
+    {"mark": "hollow (white) diamond", "means": "in the reference figures this appears on `«subject»` membership (fig-70) and on some part decompositions (fig-72)", "gotcha": "the corpus is inconsistent here — do not infer ownership kind from hollow-vs-filled alone; read the keyword lines"},
+    {"mark": "hollow triangle pointing at a box", "means": "specialisation; the pointed-at box is the general type", "gotcha": "several subclasses may share ONE triangle on a bus line (fig-24) — do not expect one per edge"},
+    {"mark": "small open V / open arrowhead", "means": "reference, satisfy, require, perform, expose, import — the label says which", "gotcha": "plain connectors between ports in an interconnection view have NO arrowheads at all"},
+    {"mark": "filled triangle arrowhead", "means": "directed flow (action flows, item flows)", "gotcha": "action flow edges are dashed in fig-67 and solid in fig-66"},
+    {"mark": "small chevron `>` or `←` inside a port square", "means": "port direction (in / out)", "gotcha": "the chevron, not the arrowhead, gives direction when the connector has no arrowhead"},
+    {"mark": "thick dark bar across a flow", "means": "fork or join — several flows split from, or merge into, this point", "gotcha": "two bars stacked close together are two separate forks"},
+    {"mark": "small `*` beside a box or line", "means": "membership/ownership marker in requirement and decomposition figures", "gotcha": "easy to mistake for a footnote or multiplication sign"},
+    {"mark": "grey box, grey text, no bold", "means": "a class from another package or an abstract class in abstract-syntax figures", "gotcha": "in diagrams proper, grey is only used for `«keyword»` lines"}
+  ],
+  "coverage": "Verified against reference figures: definition/usage, parts tree, interconnection, action flow, state transition, requirement, verification case, view and rendering, variability, individuals/snapshots, abstract syntax. Written from the view taxonomy but NOT yet checked against a figure: package/namespace, use case, constraint/assert. Not covered at all: tabular and relationship-matrix views, sequence views (no reference figure inspected).",
   "views": [
     {
       "view": "definition and usage",
       "also_called": ["BDD", "block definition diagram", "definition view", "structure"],
-      "sysml_v2_view": "GeneralView / PackageView (definitions and usages of structure)",
-      "purpose": "Declares types (definitions) and the roles that use them (usages). A definition names a kind of thing and its features; a usage says a thing of that kind exists in a particular place, possibly redefining values.",
-      "frame": {"shown": false, "header": "usually unframed; a package box around them means a PackageView"},
+      "sysml_v2_view": "GeneralView / PackageView of structure",
+      "kind": "view",
+      "purpose": "Declares types (definitions) and the roles that use them (usages). A definition names a kind of thing and its features; a usage says a thing of that kind exists in a context, possibly redefining values.",
+      "frame": {"shown": false, "header": "usually unframed"},
       "identify_by": [
-        "boxes carry a keyword line «part def», «attribute def», «item def», «port def», … for definitions, and «part», «attribute», «item», «port», … for usages",
-        "a definition's box has SQUARE corners; a usage's box has ROUNDED corners (this is the single most reliable visual tell in the reference figures)",
+        "keyword line inside each box: «part def», «attribute def», «item def», … for definitions; «part», «attribute», «item», … for usages",
+        "a definition's box has SQUARE corners, a usage's box has ROUNDED corners — the single most reliable visual tell in the reference figures",
         "a usage's header reads `name : Type`; a definition's header reads only the name",
-        "compartment titles are bare nouns on definitions (`attributes`, `parts`, `ports`, `actions`, `states`) and verb+noun on usages (`perform actions`, `exhibit states`)"
+        "compartment titles are bare nouns on definitions (`attributes`, `parts`, `ports`, `actions`) and verb+noun on usages (`perform actions`, `exhibit states`)"
       ],
       "nodes": [
-        {"shape": "rectangle, square corners, keyword line + centred name, then rule-separated compartments", "means": "definition — a type", "text": "«part def» / Vehicle / attributes: `mass :> mass` / ports: `ignitionCmdPort : IgnitionCmdPort`"},
-        {"shape": "rectangle, ROUNDED corners, keyword line + `name : Type`, then compartments", "means": "usage — a role in a context", "text": "«part» / `vehicle_b : Vehicle` / attributes: `cargoMass default 0 [kg]`, `:>>Vehicle::cargoMass`"},
-        {"shape": "small square on a box border, labelled in or out", "means": "port", "text": "`fuelIn` with an `in` arrow beside it"}
+        {"shape": "rectangle, square corners, keyword + centred name, rule-separated compartments", "means": "definition (a type)", "text": "«part def» / Vehicle / attributes `mass :> mass` / ports `ignitionCmdPort : IgnitionCmdPort`"},
+        {"shape": "rectangle, ROUNDED corners, keyword + `name : Type`, then compartments", "means": "usage (a role in a context)", "text": "«part» / `vehicle_b : Vehicle` / `cargoMass default 0 [kg]` / `:>>Vehicle::cargoMass`"},
+        {"shape": "small square on a box border", "means": "port", "text": "`fuelIn` with an in-arrow beside it"}
       ],
       "edges": [
-        {"style": "solid", "ends": "filled diamond at the whole end, plain at the part end", "means": "composition — the part end is owned by the whole", "label": "multiplicity at the whole end, e.g. `1`"},
-        {"style": "solid", "ends": "hollow triangle at the parent end", "means": "specialisation (`:>` subtype)", "label": "none"},
-        {"style": "solid", "ends": "open arrow", "means": "reference / subsetting between usages", "label": "role name or multiplicity"},
-        {"style": "dotted", "ends": "open arrow with «satisfy»/«derive»/«verify»", "means": "cross-cutting relationship to a requirement", "label": "the relationship keyword"}
+        {"style": "solid", "ends": "filled diamond at the whole end", "means": "composition", "label": "multiplicity at the whole end, e.g. `1`"},
+        {"style": "solid", "ends": "hollow triangle at the parent", "means": "specialisation (`:>`)"},
+        {"style": "solid", "ends": "open arrow", "means": "reference / subsetting"},
+        {"style": "dotted", "ends": "open arrow labelled «satisfy»/«derive»/«verify»", "means": "relationship to a requirement"}
       ],
       "keywords": ["part def", "part", "attribute def", "attribute", "item def", "item", "port def", "port", "action def", "state def", "requirement def"],
       "confuse_with": [
-        {"view": "parts tree", "how_to_tell": "a parts tree shows only usages (all boxes rounded) and every edge is a composition; a definition/usage view mixes square definition boxes with rounded usage boxes"},
-        {"view": "interconnection view", "how_to_tell": "interconnection views add port squares on the borders and connect square-to-square; here edges run box-to-box with no ports"}
+        {"view": "parts tree", "how_to_tell": "a parts tree has only rounded usage boxes and only composition edges; here square definition boxes sit among the rounded ones"},
+        {"view": "interconnection view", "how_to_tell": "interconnection views add port squares on borders and connect square-to-square"}
       ],
-      "notes": "Row grammar carries meaning and is worth reading literally: `:>` subsets, `:>>` redefines (italic row), `=` binds, `default` gives a default value, `[n..m]` is multiplicity. `perform` and `exhibit` appear in bold at the start of action/state rows.",
+      "notes": "Row grammar carries meaning: `:>` subsets, `:>>` redefines (italic row), `=` binds, `default` value, `[n..m]` multiplicity; `perform`/`exhibit` are bold at the start of action/state rows.",
       "figure": "fig-57-Part-Definition-for-Vehicle.svg + fig-61-Part-Usage-for-vehicle_b.svg",
       "verified_against_figure": true
+    },
+    {
+      "view": "parts tree",
+      "also_called": ["BOM tree", "decomposition tree", "part usage tree"],
+      "sysml_v2_view": "GeneralView restricted to composition of usages",
+      "kind": "view",
+      "purpose": "Whole–part decomposition of one part: the root box is the whole, every other box is a part it owns, and nesting shows sub-parts.",
+      "frame": {"shown": false, "header": "unframed; the root box is not marked differently from the rest"},
+      "identify_by": [
+        "every box has the same rounded shape and the same «part» keyword — no definition boxes at all",
+        "every edge is a composition: small filled diamond at the parent, nothing at the child",
+        "no ports, no arrowheads, no guards; very wide and shallow (one band of boxes per ownership level)",
+        "`name : Type` on every box; a box that owns sub-parts may omit the `: Type`"
+      ],
+      "nodes": [
+        {"shape": "rounded rectangle, «part» italic above, `name : Type` below, thin rule and empty strip", "means": "a part usage", "text": "«part» / `engine : Engine`; «part» / `vehicle_b: Vehicle` at the root"},
+        {"shape": "same, containing other boxes", "means": "a part that itself has parts", "text": "`rearAxleAssembly` containing `differential`, `rearAxle`, `rearWheel1`, `rearWheel2`"}
+      ],
+      "edges": [
+        {"style": "solid straight, fanned radially from the parent's corners", "ends": "filled diamond at the parent, plain at the child", "means": "ownership; read the diamond to find the parent", "label": "multiplicity on the child end when it is not 1, e.g. `2`"}
+      ],
+      "keywords": ["part"],
+      "confuse_with": [
+        {"view": "definition and usage", "how_to_tell": "no square-cornered definition boxes here, and no non-composition edges"},
+        {"view": "interconnection view", "how_to_tell": "no port squares and no connectors between siblings"},
+        {"view": "variability model", "how_to_tell": "if boxes carry «variation» or «variant» it is a variability tree"}
+      ],
+      "notes": "Diamonds from adjacent children can overlap into a dark blob at the parent's edge — count them by following each line, not by counting blobs.",
+      "figure": "fig-62-Parts-Tree-for-vehicle_b.svg",
+      "verified_against_figure": true
+    },
+    {
+      "view": "interconnection view",
+      "also_called": ["IBD", "internal block diagram", "parts interconnection", "structure"],
+      "sysml_v2_view": "InterconnectionView",
+      "kind": "view",
+      "purpose": "The internal structure of one part: its parts shown inside the owner's frame, wired port to port.",
+      "frame": {"shown": true, "header": "rounded frame, header band with «part» over `name : Vehicle` (bold, spaces around the colon)"},
+      "identify_by": [
+        "one frame around everything, headed by the owner part",
+        "boxes nested inside boxes to show ownership",
+        "small hollow squares straddling box borders with the port name printed OUTSIDE the box",
+        "connectors run port-to-port and have NO arrowheads; direction, where shown, is a tiny chevron inside the port square"
+      ],
+      "nodes": [
+        {"shape": "rounded rectangle inside the frame, «part» over bold name, optional italic `attributes` compartment", "means": "a part of the owner", "text": "«part» / **engine**; «part» / `frontAxle : FrontAxle`"},
+        {"shape": "hollow small square straddling a border, name outside", "means": "port", "text": "`wheelToAxlePort`, `ignitionCmdPort`, `fuelInPort`"},
+        {"shape": "port square on the frame border itself", "means": "a port of the owner, exposed at its boundary", "text": "`vehicleToRoadPort`, `wheelToRoadPort1`, `wheelToRoadPort2`"}
+      ],
+      "edges": [
+        {"style": "solid thin, orthogonal", "ends": "none (no arrowheads)", "means": "connector between two ports", "label": "sometimes a bare `=` glyph above the line; no guards, no multiplicities"}
+      ],
+      "keywords": ["part", "port"],
+      "confuse_with": [
+        {"view": "parts tree", "how_to_tell": "ports and port-to-port wiring are present here and absent there; here boxes nest inside a frame"},
+        {"view": "action flow", "how_to_tell": "action flows have arrowheads and often dashed lines; interconnection connectors have none"}
+      ],
+      "notes": "A three-line stack of squares on the frame's left border (two `wheelToRoadPort` squares plus one `vehicleToRoadPort` label) reads as a single label until zoomed.",
+      "figure": "fig-64-Parts-Interconnection-for-vehicle_b.svg",
+      "verified_against_figure": true
+    },
+    {
+      "view": "action flow",
+      "also_called": ["activity diagram", "behaviour view", "action definition", "use case flow"],
+      "sysml_v2_view": "ActionFlowView",
+      "kind": "view",
+      "purpose": "How actions consume and produce items and control: a flow from inputs through actions to outputs, with forks and joins.",
+      "frame": {"shown": true, "header": "rounded frame titled «action» over `name : Type`, or «use case» over the use-case name when the flow belongs to a use case"},
+      "identify_by": [
+        "«action» boxes with `name : Type` and no pins inside",
+        "ports as squares with a small chevron for direction; labels sit outside the box, split over two lines (`engineTorque :` / `Torque`)",
+        "thick dark horizontal bars where one flow becomes several, or several become one",
+        "`start` and `^done` as rounded «use case» boxes (not the UML filled circle / bullseye)",
+        "one swallowtail (right edge pulled inward to a point) box for `«accept action»`"
+      ],
+      "nodes": [
+        {"shape": "rounded rectangle, «action», stacked name and bold type", "means": "an action", "text": "«action» / `generateTorque :` / `GenerateTorque`"},
+        {"shape": "rectangle with a concave right edge (swallowtail)", "means": "accept action — waits for a signal", "text": "«accept action» / `ignitionCmd:IgnitionCmd`"},
+        {"shape": "thick dark grey horizontal bar", "means": "fork (one in, many out) or join (many in, one out)", "text": "none"},
+        {"shape": "rounded «use case» box", "means": "flow start / done marker", "text": "`start`, `^done`"}
+      ],
+      "edges": [
+        {"style": "dashed in fig-67, solid in fig-66", "ends": "small filled triangle at the target", "means": "control flow", "label": "none, or a guard where the flow is conditional"},
+        {"style": "solid, straddling a port label", "ends": "no arrowhead; direction from the port chevron", "means": "item flow between ports", "label": "item name and `[mult]` on the port label, e.g. `vehicleToRoadTorque [2] :` / `Torque`"}
+      ],
+      "keywords": ["action", "accept action", "use case"],
+      "confuse_with": [
+        {"view": "state transition", "how_to_tell": "states are boxes with entry/do/exit compartments and edges carrying `[guard]`/`when`; actions here have no such compartments"},
+        {"view": "interconnection view", "how_to_tell": "arrowheads and bars here; connectors without arrowheads there"}
+      ],
+      "notes": "In fig-67 every box says `«use case»` or `«action»` while the frame says `«use case»` — the frame keyword describes the owning behaviour, not the boxes.",
+      "figure": "fig-66-Action-flow-for-providePower.svg + fig-67-Action-flow-for-transportPassenger.svg",
+      "verified_against_figure": true
+    },
+    {
+      "view": "state transition",
+      "also_called": ["state machine", "stm", "statechart"],
+      "sysml_v2_view": "StateTransitionView",
+      "kind": "view",
+      "purpose": "The lifecycle of one exhibited state: its regions, states, entry/do/exit behaviour, guards and transitions.",
+      "frame": {"shown": true, "header": "tab with clipped corner: «view» `Name : State Transition View`"},
+      "identify_by": [
+        "one big rounded region per concurrent sub-machine, each with its own small filled initial dot",
+        "state boxes with italic `actions` compartment holding bold `entry` / `do` / `exit` lines",
+        "edges labelled with `trigger [guard] / effect`, where `send` and `when` appear in bold",
+        "`«exhibit state»` above the region name, with bold `parallel` when regions run concurrently"
+      ],
+      "nodes": [
+        {"shape": "large rounded region labelled with the substate name", "means": "a composite state / concurrent region", "text": "`operatingStates`, `healthStates`; outer region «exhibit state» / `vehicleStates` / **parallel**"},
+        {"shape": "rounded state box with `actions` compartment", "means": "a state with behaviour", "text": "`on` with entry `performSelfTest`, do `providePower`, exit `applyParkingBrake`"},
+        {"shape": "state box carrying `assert constraints`", "means": "a state with a constraint", "text": "`on` / `{electricalPower <= 500 [W]}`"},
+        {"shape": "small filled black circle", "means": "initial pseudostate", "text": "none"},
+        {"shape": "rounded box with a `ref parts` compartment", "means": "the state's referenced part", "text": "`controller:VehicleController`"}
+      ],
+      "edges": [
+        {"style": "solid thin", "ends": "small OPEN V arrowhead", "means": "transition", "label": "`iCmd : IgnitionCmd [iCmd.ignitionOnOff == on]` / `send StartSignal to Controller`"}
+      ],
+      "keywords": ["exhibit state", "entry", "do", "exit", "when", "send", "parallel"],
+      "confuse_with": [
+        {"view": "action flow", "how_to_tell": "state boxes carry entry/do/exit; action boxes carry ports and item labels instead"},
+        {"view": "definition and usage", "how_to_tell": "states are rounded and grouped in regions; definitions are not"}
+      ],
+      "notes": "Guard text can be truncated at the figure edge; quote what is legible and flag the missing `]` rather than inventing it.",
+      "figure": "fig-68-Vehicle-States.svg",
+      "verified_against_figure": true
+    },
+    {
+      "view": "requirement",
+      "also_called": ["req", "requirement diagram", "requirements tree"],
+      "sysml_v2_view": "RequirementView",
+      "kind": "view",
+      "purpose": "A tree of requirements with their subject, documentation, values and assumptions.",
+      "frame": {"shown": false, "header": "unframed in the reference figure"},
+      "identify_by": [
+        "boxes headed «requirement» with a number in angle brackets: `<1> vehicleMassRequirement : MassRequirement`",
+        "italic compartment titles `doc`, `attributes`, `constraints`, `subject`, `references`",
+        "`doc` holds prose; `attributes` mixes `x = 2000 [kg]` with `:>>Type::x` redefinition rows",
+        "bold `assume` inside a `constraints` compartment, holding `{...}`",
+        "composition edges to child requirements carry a small `*` near the child"
+      ],
+      "nodes": [
+        {"shape": "rounded rectangle, «requirement», `<n> name : Type`, ruled compartments", "means": "a requirement", "text": "«requirement» / `<2_1> cityFuelEconomyRequirement: FuelEconomyRequirement`"},
+        {"shape": "rounded rectangle headed «subject»", "means": "the thing the requirement is about", "text": "«subject» / `vehicle` / `dryMass:> ISQBase::mass`"}
+      ],
+      "edges": [
+        {"style": "solid thin", "ends": "filled diamond at the parent requirement, plain at the child", "means": "requirement ownership / grouping", "label": "`*` beside the child"},
+        {"style": "solid thin", "ends": "hollow diamond at the requirement end", "means": "subject membership", "label": "`*`"},
+        {"style": "dotted", "ends": "open arrow labelled «satisfy»/«verify»/«derive»", "means": "cross-cutting relationship between requirements or to a design element"}
+      ],
+      "keywords": ["requirement", "subject", "doc", "assume", "references"],
+      "confuse_with": [
+        {"view": "verification case", "how_to_tell": "verification figures add «verification»/«verification def» boxes and «perform»/«objective»/«require» arrows"}
+      ],
+      "notes": "This figure is the counter-example to 'hollow diamond = subject everywhere': here it does, and hollow-vs-filled is the only visual difference between requirement ownership and subject membership.",
+      "figure": "fig-70-Requirements-Group-vehicleSpecification.svg",
+      "verified_against_figure": true
+    },
+    {
+      "view": "verification case",
+      "also_called": ["case view", "verification", "analysis case"],
+      "sysml_v2_view": "CaseView (verification)",
+      "kind": "view",
+      "purpose": "How a verification case is performed: the system of parts and actions that run the test, the objective, and the requirement it verifies.",
+      "frame": {"shown": true, "header": "several plain tabbed frames with BOLD roman headers and no guillemets, e.g. `VerificationSystem`, `VerificationCases1`, `VerificationCaseDefinitions`"},
+      "identify_by": [
+        "multiple tabbed frames arranged side by side, headers bold with no «»",
+        "«verification» box with a `: TestType` and a `metadata` compartment",
+        "«verification def» boxes with square corners and large roman names",
+        "bold guillemet edge labels «perform», «objective», «require»"
+      ],
+      "nodes": [
+        {"shape": "rounded box, «verification», `name : Type`, italic `metadata` compartment", "means": "the case", "text": "«verification» / `massTests: MassTest` / `kind = VerificationMethodKind::test`"},
+        {"shape": "square-cornered box, «verification def» over a large name", "means": "the case definition", "text": "«verification def» / `MassTest`"},
+        {"shape": "small box «requirement»", "means": "objective or verified requirement", "text": "`obj`, `vehicleMassRequirement`"},
+        {"shape": "«part» and «perform action» boxes", "means": "the performing system", "text": "`massVerificationSystem`, `operator`, `scale`, `evaluatePassFail`, `weighVehicle`"}
+      ],
+      "edges": [
+        {"style": "solid thin", "ends": "hollow diamond at the owner end", "means": "part decomposition in the performing system"},
+        {"style": "solid thin", "ends": "filled diamond at the case end", "means": "the case owns those actions"},
+        {"style": "solid thin", "ends": "open arrow labelled «perform»", "means": "which case the system performs"},
+        {"style": "solid thin", "ends": "open arrow labelled «objective» or «require»", "means": "objective / verified requirement"},
+        {"style": "solid thin", "ends": "hollow triangle at the general case definition", "means": "specialisation"}
+      ],
+      "keywords": ["verification", "verification def", "perform action", "objective", "require", "metadata"],
+      "confuse_with": [
+        {"view": "requirement", "how_to_tell": "requirement figures show only requirement boxes; this one adds the performing system and actions"},
+        {"view": "interconnection view", "how_to_tell": "case frames have bold plain headers; interconnection frames are headed «part» name : Type"}
+      ],
+      "notes": "Both hollow and filled diamonds appear in this single figure for what look like the same relationship; trust the keyword lines over the diamond style.",
+      "figure": "fig-72-Vehicle-Mass-Verification-Test.svg",
+      "verified_against_figure": true
+    },
+    {
+      "view": "view and viewpoint",
+      "also_called": ["v", "vp", "view definition", "viewpoint", "rendering"],
+      "sysml_v2_view": "ViewView / ViewpointView / RenderingView",
+      "kind": "view",
+      "purpose": "Declares concerns, viewpoints and view definitions, and shows which view exposes or imports what; a rendering is the picture a view produces.",
+      "frame": {"shown": true, "header": "several floating tabbed frames with BOLD roman headers (`ViewpointDefinitions`, `VehicleSafetyView`, `ViewDefinitions`, `PartsTree`) — no guillemets"},
+      "identify_by": [
+        "`«concern def»`, `«viewpoint def»`, `«view def»`, `«view»` keywords",
+        "dashed edges labelled «import»*, «satisfy», «expose»* — the asterisk is superscript and easy to miss",
+        "solid edges ending in hollow triangles between view definitions (specialisation)",
+        "a rendering figure that is JUST the tagged boxes the view selected — no frame, no arrows, `«#Safety»`-style tags over part names"
+      ],
+      "nodes": [
+        {"shape": "box «concern def» with italic `doc` and `stakeholders`", "means": "a concern and who cares about it", "text": "«concern def» / `VehicleSafety` / doc 'identify system safety features' / stakeholders `se: SafetyEngineer`"},
+        {"shape": "box «viewpoint def» with italic `concerns` holding bold `require`", "means": "a viewpoint", "text": "«viewpoint def» / `SafetyViewpoint` / require `vs: VehicleSafety`"},
+        {"shape": "rounded box «view» with `name : SomeView`", "means": "a view instance", "text": "«view» / `vehiclePartsTree_Safety: PartsTreeView`"},
+        {"shape": "square-cornered box «view def»", "means": "a view definition; may hold a `renderings` compartment", "text": "«view def» / `TreeView` / `asTreeDiagram:> Views::asTreeDiagram`"},
+        {"shape": "rounded box «#Safety» over a bare name, empty lower compartment", "means": "a rendering: the elements the view selected", "text": "«#Safety» / `bumper`"}
+      ],
+      "edges": [
+        {"style": "dashed", "ends": "small filled arrowhead", "means": "«import»* or «expose»* between view, viewpoint and rendering"},
+        {"style": "dashed", "ends": "small filled arrowhead", "means": "«satisfy» from a view to a viewpoint"},
+        {"style": "solid", "ends": "hollow triangle at the general view definition", "means": "specialisation of view definitions"}
+      ],
+      "keywords": ["concern def", "viewpoint def", "view def", "view", "import", "expose", "satisfy", "renderings"],
+      "confuse_with": [
+        {"view": "definition and usage", "how_to_tell": "the keywords are about views and concerns, and the edges are dashed with «import»/«expose»"},
+        {"view": "parts tree", "how_to_tell": "a rendering may look like a parts tree with no edges at all; it has tags over names and no diamonds"}
+      ],
+      "notes": "Dashed runs may share one horizontal and read as a T-junction; follow each label to its arrowhead instead of assuming one edge.",
+      "figure": "fig-73-Vehicle-Safety-View.svg + fig-74-Rendering-of-view-vehiclePartsTree_Safety.svg",
+      "verified_against_figure": true
+    },
+    {
+      "view": "variability model",
+      "also_called": ["feature model", "variant model", "150% model"],
+      "sysml_v2_view": "GeneralView with variation/variant membership",
+      "kind": "view",
+      "purpose": "Which parts of a family are variable, which alternatives exist, and what selects among them.",
+      "frame": {"shown": false, "header": "unframed"},
+      "identify_by": [
+        "boxes carrying BOTH `«variation»` and `«part»`, and boxes carrying BOTH `«variant»` and `«part»`",
+        "small circles hanging off a variation box's bottom edge: ⊗ (circle with ×) and ⊕ (circle with +) selecting alternatives",
+        "one large `«assert constraint»` box holding an `xor` expression over the alternatives",
+        "the usual composition diamonds from the family box to each part, with italic multiplicity `1`"
+      ],
+      "nodes": [
+        {"shape": "rounded box, two keyword lines «variation» «part», `name : Type`", "means": "a variable part", "text": "«variation» «part» / `engine: Engine`"},
+        {"shape": "rounded box, «variant» «part»", "means": "one alternative", "text": "«variant» «part» / `engine4Cyl: Engine4Cyl`"},
+        {"shape": "rectangle, «assert constraint», `operator expressions` compartment", "means": "a selection constraint", "text": "`{ (engine==engine::engine4Cyl and …) xor (engine==engine::engine6Cyl and …) }`"},
+        {"shape": "small circle with ×, small circle with +", "means": "variant selection markers", "text": "⊗ / ⊕"}
+      ],
+      "edges": [
+        {"style": "solid, gently curved", "ends": "filled diamond at the family end, plain at the part", "means": "the family owns the part", "label": "`1` at part ends"},
+        {"style": "solid short", "ends": "filled diamond above a large hollow triangle", "means": "typing to the part definition", "label": "`6` for a six-cylinder part"}
+      ],
+      "keywords": ["variation", "variant", "assert constraint", "xor"],
+      "confuse_with": [
+        {"view": "parts tree", "how_to_tell": "«variation»/«variant» keywords and the constraint box are present only here"}
+      ],
+      "notes": "The ⊗/⊕ circles are the only 'port-like' marks on these boxes; do not report them as ports.",
+      "figure": "fig-75-Variability-Model-for-vehicleFamily.svg",
+      "verified_against_figure": true
+    },
+    {
+      "view": "individuals and snapshots",
+      "also_called": ["object diagram", "instance view", "occurrence view"],
+      "sysml_v2_view": "GeneralView of occurrence usages",
+      "kind": "view",
+      "purpose": "A concrete instance over time: one individual, its time slice, and per-time snapshots of its parts.",
+      "frame": {"shown": false, "header": "unframed"},
+      "identify_by": [
+        "keywords «individual occurrence», «timeslice occurrence», «snapshot occurrence»",
+        "names of the form `t0_a`, `t0_r: Road_1` — instance names with types",
+        "strict column repeat, one column per snapshot time, each column the same shape",
+        "small filled diamond at the container end of every line, rotated to lie along diagonal lines"
+      ],
+      "nodes": [
+        {"shape": "rounded box, «individual occurrence», `a: VehicleRoadContext_1`", "means": "the object", "text": "«individual occurrence» / `a: VehicleRoadContext_1`"},
+        {"shape": "rounded box, «timeslice occurrence»", "means": "the object's lifetime", "text": "`t0_t2_a`"},
+        {"shape": "rounded box, «snapshot occurrence», with `attributes` holding `tN =N [s]` and `:>>Context::time`", "means": "one instant of the object", "text": "`t0_a`"},
+        {"shape": "rounded box, «snapshot occurrence», `tN_part: Type_N`", "means": "a part at that instant", "text": "`t0_leftFront: Wheel_1`, `t0_rightFront: Wheel_2`"}
+      ],
+      "edges": [
+        {"style": "solid straight, sometimes 45°", "ends": "filled diamond at the container end, none at the child", "means": "composition between instances", "label": "none"}
+      ],
+      "keywords": ["individual occurrence", "timeslice occurrence", "snapshot occurrence"],
+      "confuse_with": [
+        {"view": "parts tree", "how_to_tell": "instance names with `_1`/`_2` suffixes and snapshot keywords; parts trees use definition types"},
+        {"view": "definition and usage", "how_to_tell": "no definitions here at all"}
+      ],
+      "notes": "Diamonds on 45° lines read as black squares; that is one marker rotated, not two different markers.",
+      "figure": "fig-76-Vehicle-Individuals-and-Snapshots.svg",
+      "verified_against_figure": true
+    },
+    {
+      "view": "abstract syntax (metamodel)",
+      "also_called": ["metamodel fragment", "M1/M2 diagram", "specification figure"],
+      "sysml_v2_view": "not a user view — a specification figure",
+      "kind": "metamodel",
+      "purpose": "Defines the language itself: classes, their specialisations and their associations. Appears in the specification, not in models you are asked to read.",
+      "frame": {"shown": false, "header": "unframed"},
+      "identify_by": [
+        "plain square-cornered boxes with BOLD single-word names and no keyword lines, no compartments",
+        "vertical ladders joined by hollow triangles (specialisation)",
+        "association labels of the form `+/role  0..*  {subsets feature}` — role name, multiplicity, constraint",
+        "greyed boxes with grey text among black ones",
+        "one hollow triangle may serve several subclasses on a shared bus line"
+      ],
+      "nodes": [
+        {"shape": "plain square box, bold name", "means": "a metaclass", "text": "`ActionUsage`, `ControlNode`, `TransitionUsage`"},
+        {"shape": "grey-filled box with grey bold name", "means": "class from another package or abstract class", "text": "`Expression`, `Succession`"}
+      ],
+      "edges": [
+        {"style": "solid vertical", "ends": "large hollow triangle at the general class", "means": "specialisation"},
+        {"style": "solid orthogonal", "ends": "small solid dot at the owning class plus a tiny open arrow at the target", "means": "association, navigable the other way", "label": "`+/source 1`, `+/effectAction 0..* {subsets feature}`"}
+      ],
+      "keywords": ["subsets", "redefines", "owning"],
+      "confuse_with": [
+        {"view": "definition and usage", "how_to_tell": "no «keyword» lines, no compartments, and the role labels use `+/` and `{subsets ...}`"}
+      ],
+      "notes": "If a figure looks like a family tree of types with dense role labels on both sides of every line, it is the specification defining the language, not a model of a system.",
+      "figure": "fig-24-Control-Nodes.svg + fig-33-Transition-Usage.svg",
+      "verified_against_figure": true
+    },
+    {
+      "view": "package and namespace",
+      "also_called": ["package view", "model organisation", "pkg"],
+      "sysml_v2_view": "PackageView",
+      "kind": "view",
+      "purpose": "How the model is organised: packages, their members and the imports between them.",
+      "frame": {"shown": true, "header": "package-shaped box (tab at the top left) carrying the package name"},
+      "identify_by": [
+        "folded-corner or tabbed rectangles holding other boxes",
+        "dashed arrows labelled «import» between packages",
+        "member boxes inside, often the definitions themselves"
+      ],
+      "nodes": [
+        {"shape": "tabbed rectangle", "means": "package", "text": "`SimpleVehicleModel`"},
+        {"shape": "small box inside", "means": "member element", "text": "`«part def» Vehicle`"}
+      ],
+      "edges": [
+        {"style": "dashed", "ends": "open arrow", "means": "import / membership dependency"}
+      ],
+      "keywords": ["package", "import"],
+      "confuse_with": [
+        {"view": "view and viewpoint", "how_to_tell": "view frames carry «view»/«viewpoint def» keywords and «expose»/«satisfy» labels"}
+      ],
+      "notes": "Described from the view taxonomy; not yet checked against a rendered figure.",
+      "figure": "fig-56-Model-Organization-for-SimpleVehicleModel.svg",
+      "verified_against_figure": false
+    },
+    {
+      "view": "use case",
+      "also_called": ["uc", "use case diagram"],
+      "sysml_v2_view": "UseCaseView",
+      "kind": "view",
+      "purpose": "What actors get from the system: use cases, actors and their include/extends relationships.",
+      "frame": {"shown": true, "header": "«use case» frame named after the use case under study"},
+      "identify_by": [
+        "«use case» boxes, typically rounded",
+        "actor boxes or stick figures at the boundary",
+        "dashed arrows labelled «include» / «extends» between use cases"
+      ],
+      "nodes": [
+        {"shape": "rounded box «use case»", "means": "a use case", "text": "`transportPassenger_1`"},
+        {"shape": "stick figure or box marked as actor", "means": "an actor", "text": "`driver`, `passenger`"}
+      ],
+      "edges": [
+        {"style": "solid", "ends": "open arrow", "means": "association between actor and use case"},
+        {"style": "dashed", "ends": "open arrow labelled «include»/«extends»", "means": "use-case relationship"}
+      ],
+      "keywords": ["use case", "actor", "include", "extends"],
+      "confuse_with": [
+        {"view": "action flow", "how_to_tell": "an action flow can carry a `«use case»` frame header yet contain «action» boxes with ports and bars — that is a flow, not a use-case diagram"}
+      ],
+      "notes": "Described from the view taxonomy; not yet checked against a rendered figure. fig-67 is a trap: it is headed «use case» but is an action flow.",
+      "figure": "fig-47-Use-Case-Definition-and-Usage.svg",
+      "verified_against_figure": false
+    },
+    {
+      "view": "constraint and assert",
+      "also_called": ["parametric diagram", "constraint view", "calc"],
+      "sysml_v2_view": "GeneralView with constraint/calculation elements",
+      "kind": "view",
+      "purpose": "Mathematical or logical constraints on the model, and the assertions that hold at a point in behaviour.",
+      "identify_by": [
+        "boxes headed «constraint def» / «constraint» / «calc def» / «assert constraint»",
+        "compartments titled `parameters` or `operator expressions` holding expressions",
+        "binding edges labelled `=` between parameters and the values they bind"
+      ],
+      "nodes": [
+        {"shape": "rectangle, «constraint def», `parameters` compartment", "means": "a constraint definition", "text": "«constraint def» / `MassConstraint` / parameters `m: MassValue`"},
+        {"shape": "rectangle, «assert constraint», expression body", "means": "an assertion in force", "text": "«assert constraint» / `{ fuelMassActual == fuelMassMax }`"}
+      ],
+      "edges": [
+        {"style": "solid", "ends": "none", "means": "binding of a parameter to a value, labelled `=`"}
+      ],
+      "keywords": ["constraint def", "constraint", "assert constraint", "calc", "parameters", "operator expressions"],
+      "confuse_with": [
+        {"view": "requirement", "how_to_tell": "requirements carry `id`/`doc`/`text`; constraints carry expressions and parameters"}
+      ],
+      "notes": "Described from the view taxonomy; not yet checked against a rendered figure. Assertions also appear as a compartment inside state and case boxes (fig-68, fig-75), so their presence alone does not make a figure a constraint view.",
+      "figure": "fig-35-Constraint-Definition-and-Usage.svg",
+      "verified_against_figure": false
     }
   ]
 }

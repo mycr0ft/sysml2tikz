@@ -2,35 +2,35 @@
 
 Also called: BDD, block definition diagram, definition view, structure
 
-SysML v2 view: `GeneralView / PackageView (definitions and usages of structure)`
+SysML v2 view: `GeneralView / PackageView of structure`
 
 ## Purpose
 
-Declares types (definitions) and the roles that use them (usages). A definition names a kind of thing and its features; a usage says a thing of that kind exists in a particular place, possibly redefining values.
+Declares types (definitions) and the roles that use them (usages). A definition names a kind of thing and its features; a usage says a thing of that kind exists in a context, possibly redefining values.
 
 ## How to recognise it
 
-* boxes carry a keyword line «part def», «attribute def», «item def», «port def», … for definitions, and «part», «attribute», «item», «port», … for usages
-* a definition's box has SQUARE corners; a usage's box has ROUNDED corners (this is the single most reliable visual tell in the reference figures)
+* keyword line inside each box: «part def», «attribute def», «item def», … for definitions; «part», «attribute», «item», … for usages
+* a definition's box has SQUARE corners, a usage's box has ROUNDED corners — the single most reliable visual tell in the reference figures
 * a usage's header reads `name : Type`; a definition's header reads only the name
-* compartment titles are bare nouns on definitions (`attributes`, `parts`, `ports`, `actions`, `states`) and verb+noun on usages (`perform actions`, `exhibit states`)
+* compartment titles are bare nouns on definitions (`attributes`, `parts`, `ports`, `actions`) and verb+noun on usages (`perform actions`, `exhibit states`)
 
 ## Nodes
 
 | shape | what it means | text inside |
 |---|---|---|
-| rectangle, square corners, keyword line + centred name, then rule-separated compartments | definition — a type | «part def» / Vehicle / attributes: `mass :> mass` / ports: `ignitionCmdPort : IgnitionCmdPort` |
-| rectangle, ROUNDED corners, keyword line + `name : Type`, then compartments | usage — a role in a context | «part» / `vehicle_b : Vehicle` / attributes: `cargoMass default 0 [kg]`, `:>>Vehicle::cargoMass` |
-| small square on a box border, labelled in or out | port | `fuelIn` with an `in` arrow beside it |
+| rectangle, square corners, keyword + centred name, rule-separated compartments | definition (a type) | «part def» / Vehicle / attributes `mass :> mass` / ports `ignitionCmdPort : IgnitionCmdPort` |
+| rectangle, ROUNDED corners, keyword + `name : Type`, then compartments | usage (a role in a context) | «part» / `vehicle_b : Vehicle` / `cargoMass default 0 [kg]` / `:>>Vehicle::cargoMass` |
+| small square on a box border | port | `fuelIn` with an in-arrow beside it |
 
 ## Edges
 
 | style | ends | what it means |
 |---|---|---|
-| solid | filled diamond at the whole end, plain at the part end | composition — the part end is owned by the whole |
-| solid | hollow triangle at the parent end | specialisation (`:>` subtype) |
-| solid | open arrow | reference / subsetting between usages |
-| dotted | open arrow with «satisfy»/«derive»/«verify» | cross-cutting relationship to a requirement |
+| solid | filled diamond at the whole end | composition |
+| solid | hollow triangle at the parent | specialisation (`:>`) |
+| solid | open arrow | reference / subsetting |
+| dotted | open arrow labelled «satisfy»/«derive»/«verify» | relationship to a requirement |
 
 ## Keyword lines
 
@@ -38,12 +38,12 @@ Declares types (definitions) and the roles that use them (usages). A definition 
 
 ## Do not confuse with
 
-* **parts tree** — a parts tree shows only usages (all boxes rounded) and every edge is a composition; a definition/usage view mixes square definition boxes with rounded usage boxes
-* **interconnection view** — interconnection views add port squares on the borders and connect square-to-square; here edges run box-to-box with no ports
+* **parts tree** — a parts tree has only rounded usage boxes and only composition edges; here square definition boxes sit among the rounded ones
+* **interconnection view** — interconnection views add port squares on borders and connect square-to-square
 
 ## Notes
 
-Row grammar carries meaning and is worth reading literally: `:>` subsets, `:>>` redefines (italic row), `=` binds, `default` gives a default value, `[n..m]` is multiplicity. `perform` and `exhibit` appear in bold at the start of action/state rows.
+Row grammar carries meaning: `:>` subsets, `:>>` redefines (italic row), `=` binds, `default` value, `[n..m]` multiplicity; `perform`/`exhibit` are bold at the start of action/state rows.
 
 ## Evidence
 
