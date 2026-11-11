@@ -26,6 +26,30 @@ jobs:
           sudo install -m 755 tectonic /usr/local/bin/tectonic
           tectonic --version
 
+      # tectonic downloads its package bundle from relay.fullyjustified.net on
+      # first use; that fetch failed once (transient), so the bundle is cached
+      # and warmed with a retry before any gate depends on it.
+      - name: cache the tectonic bundle
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/Tectonic
+          key: tectonic-bundle-v33-${{ runner.os }}
+          restore-keys: |
+            tectonic-bundle-v33-
+
+      - name: warm the bundle (retry on network flake)
+        run: |
+          retry() {
+            local n=0
+            until "$@"; do
+              n=$((n+1))
+              [ $n -ge 4 ] && { echo "::error::giving up: $*"; return 1; }
+              echo "retry $n: $*"; sleep 15
+            done
+          }
+          printf '\\documentclass{article}\n\\begin{document}warm\\end{document}\n' > /tmp/warm.tex
+          retry tectonic --outdir /tmp /tmp/warm.tex
+
       - name: build distribution
         run: uv build
 
@@ -38,7 +62,8 @@ jobs:
           mkdir -p /tmp/smoke && cd /tmp/smoke
           "$GITHUB_WORKSPACE/.ci-venv/bin/sysml2tikz" emit \
             "$GITHUB_WORKSPACE/gen/model.json" out.tex --copy-sty
-          tectonic out.tex
+          for i in 1 2 3; do tectonic out.tex && break; sleep 15; done
+          test -f out.pdf
 
       # golden .tex diff + compile of the committed documents + geometry sidecars
       - name: repository gates

@@ -30,12 +30,23 @@ jobs:
         with:
           python-version: "3.12"
 
+      - name: cache the tectonic bundle
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/Tectonic
+          key: tectonic-bundle-v33-${{ runner.os }}
+          restore-keys: |
+            tectonic-bundle-v33-
+
       - name: install tectonic
         run: |
           curl -fsSL -o tectonic.tar.gz \
             "https://github.com/tectonic-typesetting/tectonic/releases/download/tectonic%400.17.0/tectonic-0.17.0-x86_64-unknown-linux-musl.tar.gz"
           tar xzf tectonic.tar.gz tectonic
           sudo install -m 755 tectonic /usr/local/bin/tectonic
+          # a release must not block on a transient bundle fetch
+          printf '\\documentclass{article}\n\\begin{document}warm\\end{document}\n' > /tmp/warm.tex
+          for i in 1 2 3 4; do tectonic --outdir /tmp /tmp/warm.tex && break; sleep 15; done
 
       # never publish something that does not build or does not render
       - name: repository gates
