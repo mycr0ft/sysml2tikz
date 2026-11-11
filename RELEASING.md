@@ -7,13 +7,23 @@ Publishing runs in `.github/workflows/release.yml` on GitHub release, through
 
 One-time setup, in this order:
 
-1. Publish 0.0.1 by hand (already the plan) so the project exists on PyPI and the
-   name is yours.
-2. pypi.org → your project → *Publishing* → add a trusted publisher:
-   owner `mycr0ft`, repository `sysml2tikz`, workflow `release.yml`,
-   environment `pypi`.
-3. In the GitHub repo, confirm the `pypi` environment exists (Settings →
-   Environments); no secrets needed.
+1. pypi.org → *Your projects* → *Publishing* → **Add a pending publisher**
+   (pending, because the project does not exist yet — this is the form designed
+   for a first release; it claims the name on the first successful upload, so no
+   manual upload is needed at all).
+
+       PyPI project name  sysml2tikz
+       owner              mycr0ft
+       repository         sysml2tikz
+       workflow name      release.yml
+       environment        pypi
+
+2. In the GitHub repo, confirm the `pypi` environment exists (Settings →
+   Environments); no secrets are needed.
+
+A failed upload reports `invalid-publisher: valid token, but no corresponding
+publisher` when GitHub minted a good OIDC token but those five fields don't match
+a registration on PyPI — that is a PyPI-side mismatch, not a workflow bug.
 
 Then every release is:
 
