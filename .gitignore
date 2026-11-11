@@ -6,3 +6,5 @@
 gen/build/
 dist/
 *.egg-info/
+*.pdf
+!sysml2tikz.pdf
