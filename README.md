@@ -78,6 +78,15 @@ routed and rendered:
 
 ![from sysml model](docs/figures/fig-from-sysml-model.png)
 
+## Notation cards for vision models
+
+[`docs/notation/`](docs/notation/index.md) is a description of every SysML v2
+diagram kind written for a vision model rather than for a human reader: what the
+frame header says, which shapes appear, which end of each edge carries the
+diamond or the arrow, and how to tell two similar diagrams apart. Machine-readable
+twin: [`notation.json`](docs/notation/notation.json); the markdown is rendered from
+it by `tools/render_notation.py` and gated, so the two cannot drift.
+
 ## The distinction this package exists for
 
 The corpus draws the two sides differently and the difference is semantic, not

@@ -153,8 +153,17 @@ def gate_vision() -> None:
         fails.append("vision: no score returned (ollama unavailable or model silent)")
 
 
+def gate_notation() -> None:
+    r = run([sys.executable, os.path.join(ROOT, "tools", "render_notation.py"), "--check"])
+    if r.returncode != 0:
+        fails.append("notation: cards are stale — %s" % (r.stdout.strip().splitlines() or [""])[0])
+    else:
+        notes.append("notation: %s" % (r.stdout.strip() or "cards current"))
+
+
 def main(argv: list[str]) -> int:
     gate_golden()
+    gate_notation()
     gate_compile()
     gate_geometry()
     if "--vision" in argv:

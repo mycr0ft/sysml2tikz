@@ -52,6 +52,7 @@ include = [
   "ARCHITECTURE.md",
   "PIPELINE.md",
   "docs/figures",
+  "docs/notation",
   "examples",
   "gen/model.json",
   "tools/verify.py",

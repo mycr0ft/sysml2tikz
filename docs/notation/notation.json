@@ -1,0 +1,40 @@
+{
+  "version": "0.1",
+  "about": "SysML v2 draws about a dozen kinds of diagram from one notation vocabulary. Two of them look almost identical at a glance (a parts tree and an interconnection view differ only by the connectors between ports), and several share the same rectangles. These cards describe what each kind looks like well enough for a vision model to classify it and read it, without the model text. Each card is grounded in a figure from the OMG SysML v2 reference implementation, and says so — or says it is not yet verified.",
+  "decision_tree": "1. Is there an enclosing frame with a header? Read the header's first word — it names the view kind: `ibd` (interconnection), `act` (action flow), `stm` (state transition), `uc` (use case), `req` (requirement), `vp` (viewpoint), `v` (view), `assume`/`assert` (constraint), `sd` (sequence). A frame with `«view»` and an `expose` note is a *view* — the diagram inside it is whatever the view renders.\n2. No frame, or a frame without a kind word? Then classify by content:\n   - small squares straddling box borders with `in`/`out` arrows, and lines joining square to square → interconnection view (ports + connectors).\n   - no squares, and each line ends in a filled diamond at one box → parts tree / composition (a BDD restricted to usages).\n   - boxes with `«part def»`/`«attribute def»` keyword lines and no connectors between boxes → definition view (a BDD of definitions).\n   - thick bars splitting one flow into several, plus a filled circle at the start and a ring-around-dot at the end → action flow.\n   - rounded rectangles named `X` with a small label in the corner, and arrows labelled `[guard]`/`event` between them → state transition.\n   - vertical dashed lines with boxed names on top and horizontal arrows between lifelines → sequence view.\n   - ovals with stick figures → use case view.\n   - boxes whose second compartment says `id =` and `text =`, with a dotted arrow labelled «satisfy» into them → requirement view.\n3. Text tells you the rest: `part def` vs `part`, `:>` (subset) vs `:>>` (redefine) vs `=` (bind), `[1..4]` multiplicities, `«allocate»`, `«satisfy»`, `«verify»`, `«derive»`.",
+  "reading_order": "Classify first (decision tree above), then read in this order: frame header → keyword lines inside boxes → box titles and typing → compartment titles → edge ends (which end has the diamond/triangle/arrow) → edge labels and guards → any `id =`/`text =` rows. Never infer a relationship's direction from label placement; read the arrowhead. When two boxes have the same name, the one with `def` in its keyword is the definition and the other is a usage of it.",
+  "views": [
+    {
+      "view": "definition and usage",
+      "also_called": ["BDD", "block definition diagram", "definition view", "structure"],
+      "sysml_v2_view": "GeneralView / PackageView (definitions and usages of structure)",
+      "purpose": "Declares types (definitions) and the roles that use them (usages). A definition names a kind of thing and its features; a usage says a thing of that kind exists in a particular place, possibly redefining values.",
+      "frame": {"shown": false, "header": "usually unframed; a package box around them means a PackageView"},
+      "identify_by": [
+        "boxes carry a keyword line «part def», «attribute def», «item def», «port def», … for definitions, and «part», «attribute», «item», «port», … for usages",
+        "a definition's box has SQUARE corners; a usage's box has ROUNDED corners (this is the single most reliable visual tell in the reference figures)",
+        "a usage's header reads `name : Type`; a definition's header reads only the name",
+        "compartment titles are bare nouns on definitions (`attributes`, `parts`, `ports`, `actions`, `states`) and verb+noun on usages (`perform actions`, `exhibit states`)"
+      ],
+      "nodes": [
+        {"shape": "rectangle, square corners, keyword line + centred name, then rule-separated compartments", "means": "definition — a type", "text": "«part def» / Vehicle / attributes: `mass :> mass` / ports: `ignitionCmdPort : IgnitionCmdPort`"},
+        {"shape": "rectangle, ROUNDED corners, keyword line + `name : Type`, then compartments", "means": "usage — a role in a context", "text": "«part» / `vehicle_b : Vehicle` / attributes: `cargoMass default 0 [kg]`, `:>>Vehicle::cargoMass`"},
+        {"shape": "small square on a box border, labelled in or out", "means": "port", "text": "`fuelIn` with an `in` arrow beside it"}
+      ],
+      "edges": [
+        {"style": "solid", "ends": "filled diamond at the whole end, plain at the part end", "means": "composition — the part end is owned by the whole", "label": "multiplicity at the whole end, e.g. `1`"},
+        {"style": "solid", "ends": "hollow triangle at the parent end", "means": "specialisation (`:>` subtype)", "label": "none"},
+        {"style": "solid", "ends": "open arrow", "means": "reference / subsetting between usages", "label": "role name or multiplicity"},
+        {"style": "dotted", "ends": "open arrow with «satisfy»/«derive»/«verify»", "means": "cross-cutting relationship to a requirement", "label": "the relationship keyword"}
+      ],
+      "keywords": ["part def", "part", "attribute def", "attribute", "item def", "item", "port def", "port", "action def", "state def", "requirement def"],
+      "confuse_with": [
+        {"view": "parts tree", "how_to_tell": "a parts tree shows only usages (all boxes rounded) and every edge is a composition; a definition/usage view mixes square definition boxes with rounded usage boxes"},
+        {"view": "interconnection view", "how_to_tell": "interconnection views add port squares on the borders and connect square-to-square; here edges run box-to-box with no ports"}
+      ],
+      "notes": "Row grammar carries meaning and is worth reading literally: `:>` subsets, `:>>` redefines (italic row), `=` binds, `default` gives a default value, `[n..m]` is multiplicity. `perform` and `exhibit` appear in bold at the start of action/state rows.",
+      "figure": "fig-57-Part-Definition-for-Vehicle.svg + fig-61-Part-Usage-for-vehicle_b.svg",
+      "verified_against_figure": true
+    }
+  ]
+}
