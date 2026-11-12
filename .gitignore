@@ -9,3 +9,4 @@ dist/
 *.pdf
 !sysml2tikz.pdf
 __pycache__/
+private/
