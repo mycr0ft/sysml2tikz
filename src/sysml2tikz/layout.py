@@ -191,29 +191,40 @@ def emit(model: dict, d, by_id, ports, scale: float, out_path: str) -> None:
         geometry["nodes"][node["id"]] = {
             "cx": cx, "cy": cy,
             "w": by_id[node["id"]].w * scale, "h": by_id[node["id"]].h * scale}
+    geometry["wrapped_ranks"] = wrap_ranks(geometry)
+    boxes = {}
+    for nid, g in geometry["nodes"].items():
+        boxes[nid] = (g["cx"] - g["w"] / 2.0, g["cy"] - g["h"] / 2.0,
+                      g["cx"] + g["w"] / 2.0, g["cy"] + g["h"] / 2.0)
+
     for i, edge in enumerate(model.get("edges", [])):
         db_edge = d.edges[i]
-        pts = [((x) * scale, -(y) * scale) for x, y in db_edge.waypoints]
+        style = edge.get("style", "reference")
+        label = edge.get("label")
+
+        # port-anchored edges keep the engine's route (it starts on a port glyph);
+        # node-to-node edges get our own candidate search, which tests every
+        # alternative against every foreign box instead of accepting one route
+        if edge.get("src_port") or edge.get("dst_port"):
+            pts = [(x * scale, -(y) * scale) for x, y in db_edge.waypoints]
+            label_pts = pts
+        else:
+            pts = route_between(boxes, edge["src"], edge["dst"])
+            label_pts = pts
         if not pts:
             continue
-        style = edge.get("style", "reference")
+
         coords = " -- ".join("(%.1fpt,%.1fpt)" % p for p in pts)
-        label = edge.get("label")
+        lines.append(r"  \draw[sysml %s] %s;" % (style, coords))
         if label:
-            # D8: near the source end for composition, mid-edge otherwise
-            pts_db = db_edge.waypoints
-            if style == "composition" and len(pts_db) >= 2:
-                (x1, y1), (x2, y2) = pts_db[0], pts_db[1]
+            if style == "composition" and len(label_pts) >= 2:
+                (x1, y1), (x2, y2) = label_pts[0], label_pts[1]
                 lx, ly = x1 + (x2 - x1) * 0.15, y1 + (y2 - y1) * 0.15
             else:
-                lx, ly, _ = label_at(db_edge.waypoints)
-            lines.append(r"  \draw[sysml %s] %s;"
-                         % (style, coords.replace(
-                             " -- ", " -- ", 1)))
+                lx, ly, _ = label_at(label_pts)
             lines.append(r"  \node[font=\scriptsize, right] at (%.1fpt,%.1fpt) {%s};"
-                         % (lx * scale, -ly * scale, esc(label)))
-        else:
-            lines.append(r"  \draw[sysml %s] %s;" % (style, coords))
+                         % (lx, ly, esc(label)))
+
     # diagramboxes parks a port just OUTSIDE the node wall (x = px + pw); the
     # corpus draws the square centred ON the wall. Slide the glyph back by half
     # the router's own port box, so glyph centre == wall and the routed flow
@@ -279,6 +290,140 @@ def grid_positions(sizes: dict[str, tuple[float, float]], gap: float = 16.0):
         y += h + gap
 
     return {nid: (x_at[idx % cols], -y_at[idx // cols]) for idx, nid in enumerate(ids)}
+
+
+def wrap_ranks(geometry: dict, max_width: float = 1500.0, gap: float = 26.0) -> int:
+    """Wrap only the ranks that are too wide; leave the rest exactly where they are.
+
+    A tree puts every sibling on one rank, so a 19-node rank becomes a 3000pt
+    strip. Siblings do not have to share one line, so an over-wide rank is split
+    into rows: the rank keeps its y for the first row, its extra rows push the
+    ranks below down, and untouched ranks keep their x. Returns the number of
+    wrapped ranks.
+    """
+    nodes = geometry["nodes"]
+    if not nodes:
+        return 0
+
+    ranks: dict[float, list[str]] = {}
+    for nid, g in nodes.items():
+        ranks.setdefault(round(g["cy"], 1), []).append(nid)
+
+    wrapped = 0
+    offset = 0.0
+    for rank_y in sorted(ranks, reverse=True):          # top-down (y up)
+        ids = sorted(ranks[rank_y], key=lambda n: nodes[n]["cx"])
+        row_h = max(nodes[n]["h"] for n in ids)
+
+        rows, cur, cur_w = [], [], 0.0
+        for nid in ids:
+            w = nodes[nid]["w"]
+            if cur and cur_w + gap + w > max_width:
+                rows.append(cur)
+                cur, cur_w = [], 0.0
+            cur.append(nid)
+            cur_w += (gap if cur_w else 0.0) + w
+        if cur:
+            rows.append(cur)
+
+        base_y = rank_y - offset
+        if len(rows) == 1:
+            for nid in ids:                              # untouched: only the shift
+                nodes[nid]["cy"] = base_y
+            offset += 0.0
+            continue
+
+        for r_i, row in enumerate(rows):
+            row_w = sum(nodes[n]["w"] for n in row) + gap * (len(row) - 1)
+            x = -row_w / 2.0
+            y = base_y - r_i * (row_h + gap)
+            for nid in row:
+                nodes[nid]["cx"] = x + nodes[nid]["w"] / 2.0
+                nodes[nid]["cy"] = y
+                x += nodes[nid]["w"] + gap
+        wrapped += 1
+        offset += (len(rows) - 1) * (row_h + gap)
+    return wrapped
+
+
+def _segment_hits(p1, p2, boxes, skip, samples=120):
+    """How many foreign boxes this segment passes through."""
+    (x1, y1), (x2, y2) = p1, p2
+    hits = 0
+    for name, (x0, y0, x3, y3) in boxes.items():
+        if name in skip:
+            continue
+        for i in range(samples + 1):
+            u = i / samples
+            x, y = x1 + (x2 - x1) * u, y1 + (y2 - y1) * u
+            if x0 < x < x3 and y0 < y < y3:
+                hits += 1
+                break
+    return hits
+
+
+def _path_hits(pts, boxes, skip):
+    return sum(_segment_hits(a, b, boxes, skip) for a, b in zip(pts, pts[1:]))
+
+
+def route_between(boxes, src, dst, gap=24.0):
+    """Candidate orthogonal routes between two boxes; pick the one with no crossings.
+
+    The layout engine gives positions; this decides the path. Every candidate is
+    tested against every foreign box, and the score is crossings first, bends
+    second, length last — a detour is always better than a line through a block.
+    """
+    sx0, sy0, sx1, sy1 = boxes[src]
+    tx0, ty0, tx1, ty1 = boxes[dst]
+    scx, scy = (sx0 + sx1) / 2, (sy0 + sy1) / 2
+    tcx, tcy = (tx0 + tx1) / 2, (ty0 + ty1) / 2
+    skip = {src, dst}
+
+    vertical = abs(tcy - scy) >= abs(tcx - scx)
+    cands = []
+
+    # gutters: when a rank is packed, a sibling-to-sibling edge has no lane
+    # between boxes, so it must leave the band entirely and come back
+    all_x0 = min(v[0] for v in boxes.values())
+    all_x1 = max(v[2] for v in boxes.values())
+    all_y0 = min(v[1] for v in boxes.values())
+    all_y1 = max(v[3] for v in boxes.values())
+    if vertical:
+        down = tcy < scy
+        a = (scx, sy0 if down else sy1)
+        b = (tcx, ty1 if down else ty0)
+        if abs(scx - tcx) < 0.5:
+            cands.append([a, b])
+        for off in (0, gap, 2 * gap, 3 * gap, -gap, -2 * gap):
+            my = (a[1] + b[1]) / 2 + off
+            cands.append([a, (a[0], my), (b[0], my), b])
+        cands.append([a, (a[0], b[1]), b])
+        cands.append([a, (b[0], a[1]), b])
+        for gx in (all_x0 - gap, all_x1 + gap):
+            cands.append([a, (gx, a[1]), (gx, b[1]), b])
+    else:
+        right = tcx > scx
+        a = (sx1 if right else sx0, scy)
+        b = (tx0 if right else tx1, tcy)
+        if abs(scy - tcy) < 0.5:
+            cands.append([a, b])
+        for off in (0, gap, 2 * gap, 3 * gap, -gap, -2 * gap):
+            mx = (a[0] + b[0]) / 2 + off
+            cands.append([a, (mx, a[1]), (mx, b[1]), b])
+        cands.append([a, (b[0], a[1]), b])
+        cands.append([a, (a[0], b[1]), b])
+        for gy in (all_y0 - gap, all_y1 + gap):
+            cands.append([a, (a[0], gy), (b[0], gy), b])
+
+    best, best_score = None, None
+    for pts in cands:
+        hits = _path_hits(pts, boxes, skip)
+        bends = len(pts) - 2
+        length = sum(abs(x2 - x1) + abs(y2 - y1) for (x1, y1), (x2, y2) in zip(pts, pts[1:]))
+        score = 10000 * hits + 30 * bends + 0.01 * length
+        if best_score is None or score < best_score:
+            best, best_score = pts, score
+    return best
 
 
 def emit_grid(model: dict, sizes: dict[str, tuple[float, float]], out_path: str) -> None:
