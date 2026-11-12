@@ -163,6 +163,17 @@ def gate_routing() -> None:
         notes.append("routing: no edge crosses a foreign box")
 
 
+def gate_figures() -> None:
+    """figures.json claims must survive contact with the release checkout."""
+    r = run([sys.executable, os.path.join(ROOT, "tools", "check_figure_sources.py"),
+             "--quiet"])
+    first = (r.stdout.strip().splitlines() or [""])[0]
+    if r.returncode != 0:
+        fails.append("figures: %s" % first)
+    else:
+        notes.append("figures: %s" % first)
+
+
 def gate_rules() -> None:
     r = run([sys.executable, os.path.join(ROOT, "tools", "render_rules.py"), "--check"])
     if r.returncode != 0:
@@ -187,6 +198,7 @@ def main(argv: list[str]) -> int:
     gate_golden()
     gate_notation()
     gate_rules()
+    gate_figures()
     gate_routing()
     gate_compile()
     gate_geometry()
