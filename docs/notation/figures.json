@@ -1,0 +1,308 @@
+{
+  "about": "Which reference figure has a SysML v2 textual source, and where. Filenames and line anchors only — no figure content is copied here; the figures themselves are copyrighted and not redistributable.",
+  "corpus_dir": "doc/images/sysml",
+  "source_repo": "https://github.com/Systems-Modeling/SysML-v2-Release",
+  "annex_a": "sysml/src/examples/Vehicle Example/SysML v2 Spec Annex A SimpleVehicleModel.sysml",
+  "note": "Figures 56-76 are renderings of the Annex A SimpleVehicleModel, so one 1,582-line file is the textual representation behind all of them. The clause figures 01-55 illustrate notation rules; their text appears in the specification prose, not as .sysml files, and the metamodel figures (01, 08, 24, 33, 55) have no textual model at all.",
+  "entries": [
+    {
+      "figure": "fig-56-Model-Organization-for-SimpleVehicleModel.svg",
+      "kind": "view",
+      "text_available": true,
+      "source": "annex_a",
+      "anchors": [
+        "SimpleVehicleModel"
+      ]
+    },
+    {
+      "figure": "fig-57-Part-Definition-for-Vehicle.svg",
+      "kind": "view",
+      "text_available": true,
+      "source": "annex_a",
+      "anchors": [
+        "part def Vehicle"
+      ]
+    },
+    {
+      "figure": "fig-58-Part-Definition-for-FuelTank-Referencing-Fuel-it-Stores.svg",
+      "kind": "view",
+      "text_available": true,
+      "source": "annex_a",
+      "anchors": [
+        "part def FuelTank"
+      ]
+    },
+    {
+      "figure": "fig-59-Axle-and-its-Subclass-FrontAxle.svg",
+      "kind": "view",
+      "text_available": true,
+      "source": "annex_a",
+      "anchors": [
+        "part def FrontAxle:>Axle"
+      ]
+    },
+    {
+      "figure": "fig-60-Example-Definition-Elements.svg",
+      "kind": "view",
+      "text_available": true,
+      "source": "annex_a",
+      "anchors": [
+        "part def Vehicle"
+      ]
+    },
+    {
+      "figure": "fig-61-Part-Usage-for-vehicle_b.svg",
+      "kind": "view",
+      "text_available": true,
+      "source": "annex_a",
+      "anchors": [
+        "part vehicle_b"
+      ]
+    },
+    {
+      "figure": "fig-62-Parts-Tree-for-vehicle_b.svg",
+      "kind": "view",
+      "text_available": true,
+      "source": "annex_a",
+      "anchors": [
+        "part vehicle_b",
+        "rearAxleAssembly"
+      ]
+    },
+    {
+      "figure": "fig-63-Variant-engine4Cyl.svg",
+      "kind": "view",
+      "text_available": true,
+      "source": "annex_a",
+      "anchors": [
+        "engine4Cyl"
+      ]
+    },
+    {
+      "figure": "fig-64-Parts-Interconnection-for-vehicle_b.svg",
+      "kind": "view",
+      "text_available": true,
+      "source": "annex_a",
+      "anchors": [
+        "vehicleToRoadPort",
+        "connect"
+      ]
+    },
+    {
+      "figure": "fig-65-Action-providePower.svg",
+      "kind": "view",
+      "text_available": true,
+      "source": "annex_a",
+      "anchors": [
+        "action providePower"
+      ]
+    },
+    {
+      "figure": "fig-66-Action-flow-for-providePower.svg",
+      "kind": "view",
+      "text_available": true,
+      "source": "annex_a",
+      "anchors": [
+        "generateTorque",
+        "amplifyTorque"
+      ]
+    },
+    {
+      "figure": "fig-67-Action-flow-for-transportPassenger.svg",
+      "kind": "view",
+      "text_available": true,
+      "source": "annex_a",
+      "anchors": [
+        "transportPassenger"
+      ]
+    },
+    {
+      "figure": "fig-68-Vehicle-States.svg",
+      "kind": "view",
+      "text_available": true,
+      "source": "annex_a",
+      "anchors": [
+        "vehicleStates",
+        "state def"
+      ]
+    },
+    {
+      "figure": "fig-69-Requirement-Definition-MassRequirement.svg",
+      "kind": "view",
+      "text_available": true,
+      "source": "annex_a",
+      "anchors": [
+        "requirement def MassRequirement"
+      ]
+    },
+    {
+      "figure": "fig-70-Requirements-Group-vehicleSpecification.svg",
+      "kind": "view",
+      "text_available": true,
+      "source": "annex_a",
+      "anchors": [
+        "vehicleSpecification",
+        "massRequired"
+      ]
+    },
+    {
+      "figure": "fig-71-Analysis-Case-fuelEconomyAnalysis.svg",
+      "kind": "view",
+      "text_available": true,
+      "source": "annex_a",
+      "anchors": [
+        "analysis fuelEconomyAnalysis",
+        "objective fuelEconomyAnalysisObjective"
+      ]
+    },
+    {
+      "figure": "fig-72-Vehicle-Mass-Verification-Test.svg",
+      "kind": "view",
+      "text_available": true,
+      "source": "annex_a",
+      "anchors": [
+        "verification def MassTest",
+        "verification massTests"
+      ]
+    },
+    {
+      "figure": "fig-73-Vehicle-Safety-View.svg",
+      "kind": "view",
+      "text_available": true,
+      "source": "annex_a",
+      "anchors": [
+        "viewpoint def SafetyViewpoint"
+      ]
+    },
+    {
+      "figure": "fig-74-Rendering-of-view-vehiclePartsTree_Safety.svg",
+      "kind": "rendering",
+      "text_available": true,
+      "source": "annex_a",
+      "anchors": [
+        "vehiclePartsTree_Safety"
+      ]
+    },
+    {
+      "figure": "fig-75-Variability-Model-for-vehicleFamily.svg",
+      "kind": "view",
+      "text_available": true,
+      "source": "annex_a",
+      "anchors": [
+        "vehicleFamily",
+        "variation"
+      ]
+    },
+    {
+      "figure": "fig-76-Vehicle-Individuals-and-Snapshots.svg",
+      "kind": "view",
+      "text_available": true,
+      "source": "annex_a",
+      "anchors": [
+        "snapshot"
+      ]
+    },
+    {
+      "figure": "fig-01-SysML-Language-Architecture.svg",
+      "kind": "metamodel",
+      "text_available": false,
+      "note": "language architecture diagram; no textual model"
+    },
+    {
+      "figure": "fig-02-Elements.svg",
+      "kind": "metamodel",
+      "text_available": false,
+      "note": "metamodel fragment"
+    },
+    {
+      "figure": "fig-04-Annotation.svg",
+      "kind": "metamodel",
+      "text_available": false,
+      "note": "metamodel fragment"
+    },
+    {
+      "figure": "fig-07-Packages.svg",
+      "kind": "clause",
+      "text_available": false,
+      "note": "notation clause example; text is in the specification prose"
+    },
+    {
+      "figure": "fig-08-Definition-and-Usage.svg",
+      "kind": "metamodel",
+      "text_available": false,
+      "note": "taxonomy of the language, not a model"
+    },
+    {
+      "figure": "fig-10-Attribute-Definition-and-Usage.svg",
+      "kind": "clause",
+      "text_available": false,
+      "note": "notation clause example"
+    },
+    {
+      "figure": "fig-15-Part-Definition-and-Usage.svg",
+      "kind": "metamodel",
+      "text_available": false,
+      "note": "metaclass ladder"
+    },
+    {
+      "figure": "fig-16-Port-Definition-and-Usage.svg",
+      "kind": "metamodel",
+      "text_available": false,
+      "note": "metaclass ladder"
+    },
+    {
+      "figure": "fig-19-Constraint-Definition-and-Usage.svg",
+      "kind": "clause",
+      "text_available": false,
+      "note": "notation clause example"
+    },
+    {
+      "figure": "fig-22-Flows.svg",
+      "kind": "clause",
+      "text_available": false,
+      "note": "notation clause example"
+    },
+    {
+      "figure": "fig-24-Control-Nodes.svg",
+      "kind": "metamodel",
+      "text_available": false,
+      "note": "metaclass ladder"
+    },
+    {
+      "figure": "fig-30-State-Definition-and-Usage.svg",
+      "kind": "clause",
+      "text_available": false,
+      "note": "notation clause example"
+    },
+    {
+      "figure": "fig-33-Transition-Usage.svg",
+      "kind": "metamodel",
+      "text_available": false,
+      "note": "abstract syntax for TransitionUsage"
+    },
+    {
+      "figure": "fig-35-Constraint-Definition-and-Usage.svg",
+      "kind": "clause",
+      "text_available": false,
+      "note": "notation clause example"
+    },
+    {
+      "figure": "fig-37-Requirement-Definition-and-Usage.svg",
+      "kind": "clause",
+      "text_available": false,
+      "note": "notation clause example"
+    },
+    {
+      "figure": "fig-47-Use-Case-Definition-and-Usage.svg",
+      "kind": "clause",
+      "text_available": false,
+      "note": "notation clause example"
+    },
+    {
+      "figure": "fig-55-State-Space-Representation-action-and-calculation-definitions.svg",
+      "kind": "metamodel",
+      "text_available": false,
+      "note": "abstract syntax"
+    }
+  ]
+}
