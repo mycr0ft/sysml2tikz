@@ -1,0 +1,40 @@
+\documentclass[tikz,border=10pt]{standalone}
+\usepackage{sysml2tikz}
+\begin{document}
+\begin{tikzpicture}[node distance=14mm and 26mm]
+
+  % ---- parts of vehicle_b, each with the ports it exposes --------------
+  \sysmlusagenode{eng}{part}{engine}{Engine}{%
+    \sysmlcomp{attributes}
+    driveTrainEfficiency : Real\\
+  }
+  \sysmlport{eng}{west}{fuelInPort}{above left}
+  \sysmlport{eng}{east}{drivePwrPort}{above right}
+
+  \sysmlusagenode[right=of eng]{trans}{part}{transmission}{Transmission}{%
+    \sysmlcomp{attributes}
+    gearRatios : Real\\
+  }
+  \sysmlport{trans}{west}{clutchPort}{above left}
+  \sysmlport{trans}{east}{shaftPort}{above right}
+
+  \sysmlusagenode[below=of eng]{tank}{part}{fuelTank}{FuelTank}{%
+    \sysmlcomp{attributes}
+    capacity : VolumeValue\\
+  }
+  \sysmlport{tank}{east}{fuelOutPort}{above right}
+
+  % ---- the frame: header band inside, rule under it (fig-64) ----------
+  \sysmlibdframe{f}{part}{vehicle\_b : Vehicle}{(eng)(trans)(tank)}
+
+  % frame-boundary ports: the same ports, exposed on the owner's border
+  \sysmlport{f}{west}{fuelIn}{above left}
+  \sysmlport{f}{east}{shaftOut}{above right}
+
+  % ---- connectors: port to port, no arrowheads (rule D6) --------------
+  \draw[sysml connector] (f-p-west) -- (tank-p-east) -- (tank-p-east |- eng.west) -- (eng-p-west);
+  \draw[sysml connector] (eng-p-east) -- (trans-p-west);
+  \draw[sysml connector] (trans-p-east) -- (f-p-east);
+
+\end{tikzpicture}
+\end{document}

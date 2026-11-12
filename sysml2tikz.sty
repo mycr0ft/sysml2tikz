@@ -54,6 +54,8 @@
     draw, fill=white, thick, rectangle, minimum size=2.4mm, inner sep=0pt
   },
   sysml edge/.style={thick, draw=black},
+  % an interconnection connector: no arrowhead at either end (rule D6)
+  sysml connector/.style={sysml edge, -{}},
   % composition (whole end carries the filled diamond)
   sysml composition/.style={sysml edge, -{Diamond[length=3.2mm,width=2.4mm,fill=black]}},
   % directed reference / item flow
@@ -111,5 +113,14 @@
 % \sysmlframe{<id>}{<title>}{<fit targets>}
 \newcommand{\sysmlframenode}[3]{%
   \node[sysml frame, fit=#3, label={[font=\scriptsize\sffamily,anchor=north]north:{#2}}] (#1) {};}
+
+% \sysmlibdframe{<id>}{<keyword>}{<name : Type>}{<fit targets>}
+% Interconnection frame: the header band sits INSIDE the border (fig-64), with a
+% rule beneath it, instead of floating above the frame.
+\newcommand{\sysmlibdframe}[4]{%
+  \node[sysml frame, fill=none, fit=#4, inner xsep=14pt, inner ysep=16pt] (#1) {};
+  \node[anchor=north, align=center, font=\scriptsize\sffamily,
+        yshift=-2pt] at (#1.north) {\textit{«#2»}\\[1pt]{\large\sffamily #3}};
+  \draw ($(#1.north west)+(0,-0.62cm)$) -- ($(#1.north east)+(0,-0.62cm)$);}
 
 \endinput

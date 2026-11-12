@@ -67,7 +67,8 @@ def gate_compile() -> None:
     targets = [os.path.join(ROOT, "demo.tex"),
                os.path.join(GEN, "out.tex"),
                os.path.join(GEN, "laid_out.tex"),
-               os.path.join(GEN, "veh.tex")]
+               os.path.join(GEN, "veh.tex"),
+               os.path.join(ROOT, "examples", "ibd.tex")]
     for tex in targets:
         if not os.path.exists(tex):
             fails.append("compile: missing %s" % os.path.relpath(tex, ROOT))
