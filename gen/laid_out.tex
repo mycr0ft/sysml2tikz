@@ -10,14 +10,14 @@
     \sysmlcomp{attributes}cargoMass \kw{default} 0 [kg]\\\redefines{:\textgreater{}\textgreater{}Vehicle::cargoMass}\\dryMass=sum(partMasses)\\\redefines{:\textgreater{}\textgreater{}Vehicle::dryMass}\\\sysmlcomp{parts}fuelTank: FuelTank\\\sysmlcomp{perform actions}providePower :> ActionTree::providePower\\\redefines{:\textgreater{}\textgreater{}Vehicle::providePower}\\
   }
 
-  \sysmldefnode[at={(128.0pt,-410.0pt)}]{req}{requirement def}{MassRequirement}{%
+  \sysmldefnode[at={(0.0pt,-410.0pt)}]{req}{requirement def}{MassRequirement}{%
     \sysmlcomp{attributes}id = "REQ-014"\\text = "Vehicle dry mass shall not exceed 1800 kg."\\
   }
 
   \draw[sysml composition] (110.0pt,-212.0pt) -- (110.0pt,-156.0pt) -- (106.0pt,-156.0pt);
   \node[font=\scriptsize, right] at (110.0pt,-203.6pt) {1};
-  \draw[sysml satisfy] (110.0pt,-328.0pt) -- (110.0pt,-384.0pt) -- (128.0pt,-384.0pt);
-  \node[font=\scriptsize, right] at (110.0pt,-356.0pt) {«satisfy»};
+  \draw[sysml satisfy] (110.0pt,-328.0pt) -- (110.0pt,-384.0pt) -- (0.0pt,-384.0pt);
+  \node[font=\scriptsize, right] at (55.0pt,-384.0pt) {«satisfy»};
   \draw[sysml itemflow] (212.0pt,-92.0pt) -- (212.0pt,-180.0pt) -- (236.0pt,-180.0pt) -- (236.0pt,-268.0pt) -- (220.0pt,-268.0pt);
   \node[font=\scriptsize, right] at (212.0pt,-136.0pt) {fuel};
   \sysmlportat{veh-p-east}{(180.0pt,-92.0pt)}{fuelIn}{above right}

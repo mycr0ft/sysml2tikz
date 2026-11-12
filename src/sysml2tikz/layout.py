@@ -177,12 +177,14 @@ def label_at(points: list[tuple[float, float]]) -> tuple[float, float, float]:
     return best[0], best[1], best_len
 
 
-def emit(model: dict, d, by_id, ports, scale: float, out_path: str) -> None:
+def emit(model: dict, d, by_id, ports, scale: float, out_path: str,
+         node_gap: int = 8) -> None:
     geometry = {"nodes": {}, "ports": {}}
     lines = [r"\documentclass[tikz,border=10pt]{standalone}",
              r"\usepackage{sysml2tikz}",
              r"\begin{document}",
              r"\begin{tikzpicture}"]
+    wrapped = pack_ranks(d, model, scale, node_gap)
     for node in model.get("nodes", []):
         n = by_id[node["id"]]
         cx = (n.x + n.w / 2.0) * scale
@@ -191,7 +193,7 @@ def emit(model: dict, d, by_id, ports, scale: float, out_path: str) -> None:
         geometry["nodes"][node["id"]] = {
             "cx": cx, "cy": cy,
             "w": by_id[node["id"]].w * scale, "h": by_id[node["id"]].h * scale}
-    geometry["wrapped_ranks"] = wrap_ranks(geometry)
+    geometry["wrapped_ranks"] = wrapped
     boxes = {}
     for nid, g in geometry["nodes"].items():
         boxes[nid] = (g["cx"] - g["w"] / 2.0, g["cy"] - g["h"] / 2.0,
@@ -346,6 +348,96 @@ def wrap_ranks(geometry: dict, max_width: float = 1500.0, gap: float = 26.0) -> 
     return wrapped
 
 
+def pack_ranks(d, model: dict, scale: float, node_gap: int, max_width: float = 1100.0):
+    """Rank-width-first placement, applied AFTER the engine's layering.
+
+    The engine's layering (which nodes are on which rank) is good — it is the
+    Sugiyama layer assignment and it produces the vertical order the notation
+    wants. What it does not do is account for width: it walks each rank left to
+    right from that rank's own origin, so ranks drift right under wide parents
+    and a 19-node rank becomes a 2957pt strip.
+
+    So: accept the engine's ranks, measure every rank's width in emitted
+    points, then
+      1. centre every rank that fits      -> figures stop drifting right
+      2. wrap every rank that does not    -> strips become sheets
+      3. push the ranks below a wrapped one down, keeping their centring
+    Port-anchored nodes are left exactly where the engine put them: their edges
+    are emitted from the engine's waypoints and sliding them would detach the
+    ports. Returns the number of ranks wrapped.
+    """
+    nodes = d.nodes
+    ranked: dict[int, list] = {}
+    for n in nodes:
+        ranked.setdefault(round(n.y / 4.0) * 4, []).append(n)
+
+    unit_gap = node_gap * scale                      # engine units -> points
+    wrapped = 0
+    offset = 0.0                                     # accumulated y push, points
+
+    for rank_y in sorted(ranked, reverse=True):      # top-down in emitted space
+        members = ranked[rank_y]
+        anchors = port_anchored(d)
+        slideable = [n for n in members if id(n) not in anchors]
+        if not slideable:
+            offset += 0.0
+            continue
+
+        total_w = (sum(n.w for n in members) * scale
+                   + unit_gap * (len(members) - 1))
+
+        if total_w <= max_width:
+            # centring only: shift the whole rank so its midpoint is x=0
+            xs = [(n.x + n.w / 2.0) for n in members]
+            mid = (min(xs) + max(xs)) / 2.0
+            for n in members:
+                n.x -= mid
+            offset += 0.0
+            continue
+
+        # over-wide: wrap into rows of <= max_width, then centre each row
+        wrapped += 1
+        members.sort(key=lambda n: n.x)
+        rows, cur, cur_w = [], [], 0.0
+        for n in members:
+            w = n.w * scale
+            if cur and cur_w + unit_gap + w > max_width:
+                rows.append(cur)
+                cur, cur_w = [], 0.0
+            cur.append(n)
+            cur_w += (unit_gap if cur_w else 0.0) + w
+        if cur:
+            rows.append(cur)
+
+        row_h = max(n.h for n in members) * scale
+        base_y = rank_y - offset                     # engine units
+        for r_i, row in enumerate(rows):
+            row_w = sum(n.w for n in row) * scale + unit_gap * (len(row) - 1)
+            x = -row_w / 2.0 / scale                 # engine units
+            y = base_y - r_i * (row_h + unit_gap) / scale
+            for n in row:
+                n.x = x
+                n.y = y
+                x += n.w + node_gap
+        offset += (len(rows) - 1) * (row_h + unit_gap)
+    return wrapped
+
+
+def port_anchored(d) -> set[int]:
+    """Identity of nodes whose edges dock on ports (their x must not change).
+
+    diagramboxes' Node carries the name in ``.name`` (``.label`` is the
+    Lifeline attribute); identity is what matters anyway, since ``add_node``
+    was called per IR node.
+    """
+    out: set[int] = set()
+    for e in d.edges:
+        for end in (e.source, e.target):
+            if getattr(end, "ports", None):
+                out.add(id(end))
+    return out
+
+
 def _segment_hits(p1, p2, boxes, skip, samples=120):
     """How many foreign boxes this segment passes through."""
     (x1, y1), (x2, y2) = p1, p2
@@ -472,7 +564,7 @@ def main(argv: list[str]) -> int:
             print("copied", copy_sty(os.path.dirname(os.path.abspath(out_path))))
         return 0
     d, by_id, ports = layout(model, sizes, scale, layer_gap, node_gap)
-    emit(model, d, by_id, ports, scale, out_path)
+    emit(model, d, by_id, ports, scale, out_path, node_gap)
     if want_sty:
         from .emit import copy_sty
         print("copied", copy_sty(os.path.dirname(os.path.abspath(out_path))))

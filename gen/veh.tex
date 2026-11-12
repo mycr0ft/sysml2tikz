@@ -2,22 +2,22 @@
 \usepackage{sysml2tikz}
 \begin{document}
 \begin{tikzpicture}
-  \sysmldefnode[at={(70.0pt,-54.0pt)}]{Engine}{part def}{Engine}{%
+  \sysmldefnode[at={(-122.0pt,-54.0pt)}]{Engine}{part def}{Engine}{%
     \sysmlcomp{attributes}power : PowerValue\\
   }
 
-  \sysmldefnode[at={(74.0pt,-180.0pt)}]{Vehicle}{part def}{Vehicle}{%
+  \sysmldefnode[at={(0.0pt,-180.0pt)}]{Vehicle}{part def}{Vehicle}{%
     \sysmlcomp{attributes}mass : MassValue\\velocity : SpeedValue\\\sysmlcomp{parts}engine : Engine [1]\\wheels : Wheel [4]\\\sysmlcomp{ports}fuelIn : FuelPort\\
   }
 
-  \sysmldefnode[at={(184.0pt,-54.0pt)}]{Wheel}{part def}{Wheel}{%
+  \sysmldefnode[at={(-8.0pt,-54.0pt)}]{Wheel}{part def}{Wheel}{%
     \sysmlcomp{attributes}diameter : LengthValue\\
   }
 
-  \sysmlusagenode[at={(314.0pt,-54.0pt)}]{vehicle_b}{part}{vehicle\_b}{Vehicle}{%
+  \sysmlusagenode[at={(122.0pt,-54.0pt)}]{vehicle_b}{part}{vehicle\_b}{Vehicle}{%
     \sysmlcomp{attributes}\redefines{:\textgreater{}\textgreater{} cargoMass}\\
   }
 
-  \draw[sysml composition] (260.0pt,-54.0pt) -- (260.0pt,-180.0pt) -- (116.0pt,-180.0pt);
+  \draw[sysml composition] (122.0pt,-76.0pt) -- (122.0pt,-132.0pt) -- (0.0pt,-132.0pt);
 \end{tikzpicture}
 \end{document}

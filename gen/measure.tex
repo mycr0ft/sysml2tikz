@@ -2,41 +2,32 @@
 \usepackage{sysml2tikz}
 \begin{document}
 \begin{tikzpicture}[x=200cm,y=1cm]
-  \sysmldefnode[at={(0.000cm,0)}]{Engine}{part def}{Engine}{%
-    \sysmlcomp{attributes}power : PowerValue\\
+  \sysmldefnode[at={(0.000cm,0)}]{veh}{part def}{Vehicle}{%
+    \sysmlcomp{attributes}brakePedalDepressed: Boolean\\mass :> mass\\velocity :> speed\\\sysmlcomp{ports}ignitionCmdPort: IgnitionCmdPort\\vehicleToRoadPort: VehicleToRoadPort\\\sysmlcomp{actions}\kw{perform} providePower\\\sysmlcomp{states}\kw{exhibit} vehicleStates\\
   }
 
-  \sysmldefnode[at={(1.000cm,0)}]{Vehicle}{part def}{Vehicle}{%
-    \sysmlcomp{attributes}mass : MassValue\\velocity : SpeedValue\\\sysmlcomp{parts}engine : Engine [1]\\wheels : Wheel [4]\\\sysmlcomp{ports}fuelIn : FuelPort\\
+  \sysmlusagenode[at={(1.000cm,0)}]{vehb}{part}{vehicle\_b}{Vehicle}{%
+    \sysmlcomp{attributes}cargoMass \kw{default} 0 [kg]\\\redefines{:\textgreater{}\textgreater{}Vehicle::cargoMass}\\dryMass=sum(partMasses)\\\redefines{:\textgreater{}\textgreater{}Vehicle::dryMass}\\\sysmlcomp{parts}fuelTank: FuelTank\\\sysmlcomp{perform actions}providePower :> ActionTree::providePower\\\redefines{:\textgreater{}\textgreater{}Vehicle::providePower}\\
   }
 
-  \sysmldefnode[at={(2.000cm,0)}]{Wheel}{part def}{Wheel}{%
-    \sysmlcomp{attributes}diameter : LengthValue\\
-  }
-
-  \sysmlusagenode[at={(3.000cm,0)}]{vehicle_b}{part}{vehicle\_b}{Vehicle}{%
-    \sysmlcomp{attributes}\redefines{:\textgreater{}\textgreater{} cargoMass}\\
+  \sysmldefnode[at={(2.000cm,0)}]{req}{requirement def}{MassRequirement}{%
+    \sysmlcomp{attributes}id = "REQ-014"\\text = "Vehicle dry mass shall not exceed 1800 kg."\\
   }
 
   \newdimen\sysmlw\newdimen\sysmlh
-  \pgfextractx{\sysmlw}{\pgfpointdiff{\pgfpointanchor{Engine}{west}}{\pgfpointanchor{Engine}{east}}}
-  \pgfextracty{\sysmlh}{\pgfpointdiff{\pgfpointanchor{Engine}{south}}{\pgfpointanchor{Engine}{north}}}
-  \typeout{SYSMLSZ Engine \the\sysmlw}
-  \typeout{SYSMLSH Engine \the\sysmlh}
+  \pgfextractx{\sysmlw}{\pgfpointdiff{\pgfpointanchor{veh}{west}}{\pgfpointanchor{veh}{east}}}
+  \pgfextracty{\sysmlh}{\pgfpointdiff{\pgfpointanchor{veh}{south}}{\pgfpointanchor{veh}{north}}}
+  \typeout{SYSMLSZ veh \the\sysmlw}
+  \typeout{SYSMLSH veh \the\sysmlh}
   \newdimen\sysmlw\newdimen\sysmlh
-  \pgfextractx{\sysmlw}{\pgfpointdiff{\pgfpointanchor{Vehicle}{west}}{\pgfpointanchor{Vehicle}{east}}}
-  \pgfextracty{\sysmlh}{\pgfpointdiff{\pgfpointanchor{Vehicle}{south}}{\pgfpointanchor{Vehicle}{north}}}
-  \typeout{SYSMLSZ Vehicle \the\sysmlw}
-  \typeout{SYSMLSH Vehicle \the\sysmlh}
+  \pgfextractx{\sysmlw}{\pgfpointdiff{\pgfpointanchor{vehb}{west}}{\pgfpointanchor{vehb}{east}}}
+  \pgfextracty{\sysmlh}{\pgfpointdiff{\pgfpointanchor{vehb}{south}}{\pgfpointanchor{vehb}{north}}}
+  \typeout{SYSMLSZ vehb \the\sysmlw}
+  \typeout{SYSMLSH vehb \the\sysmlh}
   \newdimen\sysmlw\newdimen\sysmlh
-  \pgfextractx{\sysmlw}{\pgfpointdiff{\pgfpointanchor{Wheel}{west}}{\pgfpointanchor{Wheel}{east}}}
-  \pgfextracty{\sysmlh}{\pgfpointdiff{\pgfpointanchor{Wheel}{south}}{\pgfpointanchor{Wheel}{north}}}
-  \typeout{SYSMLSZ Wheel \the\sysmlw}
-  \typeout{SYSMLSH Wheel \the\sysmlh}
-  \newdimen\sysmlw\newdimen\sysmlh
-  \pgfextractx{\sysmlw}{\pgfpointdiff{\pgfpointanchor{vehicle_b}{west}}{\pgfpointanchor{vehicle_b}{east}}}
-  \pgfextracty{\sysmlh}{\pgfpointdiff{\pgfpointanchor{vehicle_b}{south}}{\pgfpointanchor{vehicle_b}{north}}}
-  \typeout{SYSMLSZ vehicle_b \the\sysmlw}
-  \typeout{SYSMLSH vehicle_b \the\sysmlh}
+  \pgfextractx{\sysmlw}{\pgfpointdiff{\pgfpointanchor{req}{west}}{\pgfpointanchor{req}{east}}}
+  \pgfextracty{\sysmlh}{\pgfpointdiff{\pgfpointanchor{req}{south}}{\pgfpointanchor{req}{north}}}
+  \typeout{SYSMLSZ req \the\sysmlw}
+  \typeout{SYSMLSH req \the\sysmlh}
 \end{tikzpicture}
 \end{document}
