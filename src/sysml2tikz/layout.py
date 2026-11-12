@@ -78,6 +78,13 @@ def node_call(node: dict, opt: str) -> str:
 # ------------------------------------------------------------------- 1 measure
 def measure(model: dict, workdir: str, tectonic: str) -> dict[str, tuple[float, float]]:
     """Return {node id: (width_pt, height_pt)} measured by TeX itself."""
+    # the throwaway measure document needs the package on its path; a render
+    # directory created outside the repo (the corpus) has no symlink to it
+    sty = os.path.join(workdir, "sysml2tikz.sty")
+    if not os.path.exists(sty):
+        import shutil
+        from . import sty_path
+        shutil.copyfile(sty_path(), sty)
     nodes = model.get("nodes", [])
     # spread them out so nothing overlaps while measuring
     lines = [r"\documentclass[tikz,border=2pt,multi=false]{standalone}",
@@ -240,6 +247,62 @@ def emit(model: dict, d, by_id, ports, scale: float, out_path: str) -> None:
     print("wrote", out_path, "and", sidecar)
 
 
+def grid_positions(sizes: dict[str, tuple[float, float]], gap: float = 16.0):
+    """Place edge-free nodes in a grid, sized per row and per column.
+
+    A package of 34 definitions has no edges, so a rank-based router puts all 34
+    on one line and the figure becomes a 9000x400 smear. Nothing is being laid
+    out in that case, so lay it out as a grid — and size each column by its
+    widest box and each row by its tallest, otherwise one tall block (Vehicle)
+    inflates every row and the sheet is mostly whitespace.
+    """
+    import math
+    ids = sorted(sizes)
+    cols = max(1, int(math.ceil(math.sqrt(len(ids) * 1.4))))
+    rows = math.ceil(len(ids) / cols)
+
+    col_w = [0.0] * cols
+    row_h = [0.0] * rows
+    for idx, nid in enumerate(ids):
+        r, c = divmod(idx, cols)
+        col_w[c] = max(col_w[c], sizes[nid][0])
+        row_h[r] = max(row_h[r], sizes[nid][1])
+
+    x_at, y_at = [], []
+    x = 0.0
+    for w in col_w:
+        x_at.append(x)
+        x += w + gap
+    y = 0.0
+    for h in row_h:
+        y_at.append(y)
+        y += h + gap
+
+    return {nid: (x_at[idx % cols], -y_at[idx // cols]) for idx, nid in enumerate(ids)}
+
+
+def emit_grid(model: dict, sizes: dict[str, tuple[float, float]], out_path: str) -> None:
+    pos = grid_positions(sizes)
+    geometry = {"nodes": {}, "ports": {}, "layout": "grid"}
+    lines = [r"\documentclass[tikz,border=10pt]{standalone}",
+             r"\usepackage{sysml2tikz}",
+             r"\begin{document}",
+             r"\begin{tikzpicture}"]
+    for node in model.get("nodes", []):
+        x, y = pos[node["id"]]
+        lines.append(node_call(node, "[at={(%.1fpt,%.1fpt)}]" % (x, y)))
+        w, h = sizes[node["id"]]
+        geometry["nodes"][node["id"]] = {"cx": x, "cy": y, "w": w, "h": h}
+    lines += [r"\end{tikzpicture}", r"\end{document}", ""]
+    with open(out_path, "w", encoding="utf-8") as fh:
+        fh.write("\n".join(lines))
+    stem = os.path.splitext(os.path.basename(out_path))[0]
+    with open(os.path.join(os.path.dirname(os.path.abspath(out_path)),
+                           "geometry-%s.json" % stem), "w", encoding="utf-8") as fh:
+        json.dump(geometry, fh, indent=2, sort_keys=True)
+    print("wrote", out_path, "(grid layout, %d nodes)" % len(sizes))
+
+
 def main(argv: list[str]) -> int:
     if len(argv) < 3:
         print(__doc__)
@@ -258,6 +321,11 @@ def main(argv: list[str]) -> int:
     tectonic = os.path.expanduser("~/.local/bin/tectonic")
     sizes = measure(model, workdir, tectonic)
     print("measured:", {k: (round(v[0], 1), round(v[1], 1)) for k, v in sizes.items()})
+    if not model.get("edges") and len(sizes) > 3:
+        emit_grid(model, sizes, out_path)
+        if want_sty:
+            print("copied", copy_sty(os.path.dirname(os.path.abspath(out_path))))
+        return 0
     d, by_id, ports = layout(model, sizes, scale, layer_gap, node_gap)
     emit(model, d, by_id, ports, scale, out_path)
     if want_sty:

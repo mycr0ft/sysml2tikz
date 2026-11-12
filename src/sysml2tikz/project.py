@@ -136,6 +136,118 @@ def project_element(elem) -> dict | None:
     return node
 
 
+def iter_leaf_packages(model):
+    """(path, package) for every package that directly owns projectable members.
+
+    Reference models nest packages several levels deep (SimpleVehicleModel
+    -> Definitions -> PartDefinitions -> Part...), so a projection that only
+    looks one level down sees nothing but packages.
+    """
+    out = []
+
+    def walk(pkg, path):
+        kids = list(getattr(pkg, "children", []) or [])
+        mine = [k for k in kids if type(k).__name__ in KIND]
+        if mine:
+            out.append((path or getattr(pkg, "name", "model"), pkg, mine))
+        for k in kids:
+            if type(k).__name__ == "Package":
+                walk(k, (path + "::" if path else "") + (getattr(k, "name", "") or ""))
+
+    walk(model, getattr(model, "name", "") or "")
+    return out
+
+
+def project_members(members) -> dict:
+    """Project an explicit list of elements (one figure's worth)."""
+    nodes, types, usages = [], {}, []
+    for elem in members:
+        node = project_element(elem)
+        if node is None:
+            continue
+        nodes.append(node)
+        if node["kind"].endswith(" def"):
+            types[node["name"]] = node["id"]
+        elif node.get("type"):
+            mult = re.search(r"\[([^\]]+)\]", node["type"])
+            base = re.sub(r"\s*\[[^\]]*\]", "", node["type"]).strip()
+            usages.append((node["id"], base, mult.group(1) if mult else None))
+    edges = []
+    for node_id, type_name, mult in usages:
+        target = types.get(type_name.split("::")[-1])
+        if target:
+            edge = {"src": node_id, "dst": target, "style": "composition"}
+            if mult:
+                edge["label"] = mult
+            edges.append(edge)
+    out = sorted(nodes, key=lambda n: (not n["kind"].endswith(" def"), n["id"]))
+    return {"node_distance": "14mm", "nodes": out, "ports": [], "edges": edges}
+
+
+def _slug(name: str, parent: str = "") -> str:
+    base = re.sub(r"\W+", "_", name or "x").strip("_") or "x"
+    return (parent + "_" + base) if parent else base
+
+
+def project_tree(root) -> dict:
+    """A whole-part tree: nested part usages become NODES joined by composition.
+
+    This is the projection a parts tree needs (fig-62): walking members as rows
+    would flatten the very structure the figure is about.
+    """
+    nodes: list[dict] = []
+    edges: list[dict] = []
+    seen: set[str] = set()
+
+    def add(elem, parent_id: str | None, depth: int):
+        node = project_element(elem)
+        if node is None:
+            return
+        node = dict(node)
+        node["id"] = _slug(node["id"], parent_id or "")
+        if node["id"] in seen:
+            return
+        seen.add(node["id"])
+        node["compartments"] = [c for c in node.get("compartments", [])
+                                if c["label"] == "attributes"]
+        nodes.append(node)
+        if parent_id:
+            mult = re.search(r"\[([^\]]+)\]", node.get("type", "") or "")
+            edge = {"src": node["id"], "dst": parent_id, "style": "composition"}
+            if mult:
+                edge["label"] = mult.group(1)
+            edges.append(edge)
+        if depth >= 4:
+            return
+        for child in getattr(elem, "children", []) or []:
+            if type(child).__name__ in KIND:
+                add(child, node["id"], depth + 1)
+
+    add(root, None, 0)
+    return {"node_distance": "14mm", "nodes": nodes, "ports": [], "edges": edges}
+
+
+def project_by_package(model) -> list[tuple[str, dict]]:
+    """One IR per package that owns elements — the natural figure granularity."""
+    out = []
+    for path, _pkg, mine in iter_leaf_packages(model):
+        # a package of part usages that themselves own parts is a tree, not a list
+        trees = [m for m in mine if type(m).__name__ in KIND
+                 and not getattr(m, "is_definition", False)
+                 and any(type(c).__name__ in KIND for c in getattr(m, "children", []) or [])]
+        if trees:
+            ir = {"node_distance": "14mm", "nodes": [], "ports": [], "edges": []}
+            for root in trees:
+                sub = project_tree(root)
+                have = {n["id"] for n in ir["nodes"]}
+                ir["nodes"] += [n for n in sub["nodes"] if n["id"] not in have]
+                ir["edges"] += sub["edges"]
+        else:
+            ir = project_members(mine)
+        out.append((path, ir))
+    return out
+
+
 def project(model) -> dict:
     nodes: list[dict] = []
     types: dict[str, str] = {}          # definition name -> node id
@@ -165,7 +277,6 @@ def project(model) -> dict:
 
     # keep definitions above their usages
     out_nodes = sorted(nodes, key=lambda n: (not n["kind"].endswith(" def"), n["id"]))
-    ir = {"node_distance": "14mm", "nodes": out_nodes, "ports": [], "edges": edges}
     if skipped:
         ir["projection_notes"] = {
             "skipped_members": sorted(set(skipped)),
