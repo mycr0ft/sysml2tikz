@@ -168,6 +168,21 @@ def layout(model: dict, sizes: dict[str, tuple[float, float]], scale: float,
     return d, by_id, ports, overrides
 
 
+def _row_bands(boxes: dict, tol: float = 24.0):
+    """Cluster box rectangles into horizontal rows; return per-row extents
+    (y0, y1, x_min, x_max). Rows are what rank placement produced."""
+    rows = []
+    for name, (x0, y0, x1, y1) in sorted(boxes.items(), key=lambda kv: kv[1][1]):
+        for r in rows:
+            if not (y1 < r[0] - tol or y0 > r[1] + tol):
+                r[0] = min(r[0], y0); r[1] = max(r[1], y1)
+                r[2] = min(r[2], x0); r[3] = max(r[3], x1)
+                break
+        else:
+            rows.append([y0, y1, x0, x1])
+    return rows
+
+
 def facing_wall(own: tuple[float, float, float, float],
                 other_cx: float, other_cy: float) -> str:
     """The wall of `own` (engine units: x0, y0, x1, y1) that faces the partner."""
@@ -562,8 +577,25 @@ def route_between(boxes, src, dst, gap=24.0):
             cands.append([a, (a[0], my), (b[0], my), b])
         cands.append([a, (a[0], b[1]), b])
         cands.append([a, (b[0], a[1]), b])
-        for gx in (all_x0 - gap, all_x1 + gap):
-            cands.append([a, (gx, a[1]), (gx, b[1]), b])
+        # gutters from real walls: vertical lanes just outside obstacle
+        # walls nearest the corridor (≤8), so a descent can dodge a box that
+        # sits between the ranks (attribute boxes do exactly that)
+        walls = sorted({round(v[1]) for v in boxes.values()}
+                       | {round(v[3]) for v in boxes.values()})
+        mid = (a[0] + b[0]) / 2.0
+        lanes = sorted({(w + gap) for w in walls} | {(w - gap) for w in walls}
+                       | {round((w1 + w2) / 2.0) for w1, w2 in zip(walls, walls[1:])
+                          if w2 - w1 >= 2 * gap},
+                       key=lambda x: abs(x - mid))[:14]
+        for ly in lanes:
+            cands.append([a, (a[0], ly), (b[0], ly), b])
+        # and x-lanes: shift the whole descent into a clear column
+        xwalls = sorted({round(v[0]) for v in boxes.values()}
+                        | {round(v[2]) for v in boxes.values()})
+        xlanes = sorted({(w + gap) for w in xwalls} | {(w - gap) for w in xwalls},
+                        key=lambda x: abs(x - mid))[:14]
+        for lx in xlanes:
+            cands.append([a, (lx, a[1]), (lx, b[1]), b])
     else:
         right = tcx > scx
         a = (sx1 if right else sx0, scy)
@@ -577,6 +609,26 @@ def route_between(boxes, src, dst, gap=24.0):
         cands.append([a, (a[0], b[1]), b])
         for gy in (all_y0 - gap, all_y1 + gap):
             cands.append([a, (a[0], gy), (b[0], gy), b])
+        # sidestep candidates: verticals just OUTSIDE real obstacle walls.
+        # Gutters between x-walls give the descending/ascending leg a lane no
+        # box occupies; escaping via an outer y-gutter first lets the leg clear
+        # a packed sibling row that walls off the direct run. Candidate set is
+        # bounded to the walls nearest the a→b corridor (≤8 lanes).
+        walls = sorted({round(v[0]) for v in boxes.values()}
+                       | {round(v[2]) for v in boxes.values()})
+        mid = (a[0] + b[0]) / 2.0
+        # wall±gap lanes, plus the centre of every real gap between walls —
+        # the centre of the (180,192) slot between two buildings is the only
+        # lane that clears both
+        lanes = sorted({(w + gap * (1 if w >= (b[0] if right else b[0]) else -1))
+                        for w in walls}
+                       | {round((w1 + w2) / 2.0) for w1, w2 in zip(walls, walls[1:])
+                          if w2 - w1 >= 2 * gap},
+                       key=lambda x: abs(x - mid))[:14]
+        for lx in lanes:
+            cands.append([a, (lx, a[1]), (lx, b[1]), b])
+            for gy in (all_y1 + gap, all_y0 - gap):
+                cands.append([a, (a[0], gy), (lx, gy), (lx, b[1]), b])
 
     best, best_score = None, None
     for pts in cands:

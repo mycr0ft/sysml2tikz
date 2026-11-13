@@ -2,7 +2,7 @@
 
 * model: `SysML v2 Spec Annex A SimpleVehicleModel.sysml` (sha256 77d7ee54951e…)
 * packages with elements: 29 · rendered: 22 · failed: 0 · skipped: 7
-* routing clean: 18/22 rendered
+* routing clean: 21/22 rendered
 * readable (≤4000 px wide, aspect ≤6:1): 21/22
 * renders live in `private/corpus/vehicle-annex-a/` (gitignored — model content is EPL-2.0 and not redistributed here)
 
@@ -22,10 +22,10 @@
 | `GenericContext` | 1 | 0 | skipped | fewer than 2 nodes |
 | `PartsTree` | 0 | 0 | skipped | fewer than 2 nodes |
 | `VehicleLogicalToPhysicalAllocation` | 3 | 2 | rendered |  |
-| `PartsTree` | 19 | 18 | rendered | routing not clean |
+| `PartsTree` | 19 | 18 | rendered |  |
 | `PartsTree` | 87 | 86 | skipped | 87 nodes exceeds --max-nodes 60 (a single rank becomes a strip) |
 | `ActionTree` | 5 | 4 | rendered | unreadable strip (1695x271) — layout puts every sibling at one rank |
-| `Sequence` | 9 | 8 | rendered | routing not clean |
+| `Sequence` | 9 | 8 | rendered |  |
 | `Requirements` | 6 | 4 | rendered |  |
 | `Engine4Cyl_Variant` | 8 | 6 | rendered |  |
 | `WheelHubAssemblies` | 32 | 29 | rendered | routing not clean |
@@ -35,7 +35,7 @@
 | `MissionContext` | 11 | 10 | rendered |  |
 | `ContextDefinitions` | 5 | 0 | rendered |  |
 | `VariationPointDefinitions` | 1 | 0 | skipped | fewer than 2 nodes |
-| `VehiclePartsTree` | 12 | 11 | rendered | routing not clean |
+| `VehiclePartsTree` | 12 | 11 | rendered |  |
 | `ViewpointDefinitions` | 1 | 0 | skipped | fewer than 2 nodes |
 
 Regenerate with:
