@@ -637,7 +637,19 @@ def main(argv: list[str]) -> int:
     d, by_id, ports, overrides = layout(model, sizes, scale, layer_gap, node_gap)
     if overrides:
         model.setdefault("projection_notes", {})["port_side_overrides"] = overrides
+        # the IR file on disk keeps the declared sides (the notation's truth);
+        # the sidecar is the record of what the placement pass chose
+        emit_overrides = True
+    else:
+        emit_overrides = False
     emit(model, d, by_id, ports, scale, out_path, node_gap, layer_gap)
+    if emit_overrides:
+        stem = os.path.splitext(os.path.basename(out_path))[0]
+        sidecar = os.path.join(os.path.dirname(os.path.abspath(out_path)),
+                               "geometry-%s.json" % stem)
+        g = json.load(open(sidecar))
+        g["port_side_overrides"] = overrides
+        json.dump(g, open(sidecar, "w"), indent=2, sort_keys=True)
     if want_sty:
         from .emit import copy_sty
         print("copied", copy_sty(os.path.dirname(os.path.abspath(out_path))))
