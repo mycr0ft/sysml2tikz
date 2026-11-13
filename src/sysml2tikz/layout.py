@@ -152,9 +152,10 @@ def layout(model: dict, sizes: dict[str, tuple[float, float]], scale: float,
     for port in model.get("ports", []):
         node = by_id[port["node"]]
         db_side = side_map[port["side"]]
-        ports[(port["node"], port["side"])] = node.add_port(
-            port["name"], side=db_side, offset=0.5,
-            direction=port.get("direction"))
+        p = node.add_port(port["name"], side=db_side, offset=0.5,
+                          direction=port.get("direction"))
+        ports[(port["node"], port["name"])] = p
+        ports[(port["node"], port["side"])] = p
     for edge in model.get("edges", []):
         kw = {}
         if edge.get("src_port"):
@@ -163,7 +164,66 @@ def layout(model: dict, sizes: dict[str, tuple[float, float]], scale: float,
             kw["target_port"] = ports[(edge["dst"], edge["dst_port"])]
         d.add_edge(by_id[edge["src"]], by_id[edge["dst"]], **kw)
     d.layout(routing="orthogonal", layer_gap=layer_gap, node_gap=node_gap)
-    return d, by_id, ports
+    overrides = autoface_ports(d, model, by_id, ports, scale, layer_gap, node_gap, side_map)
+    return d, by_id, ports, overrides
+
+
+def facing_wall(own: tuple[float, float, float, float],
+                other_cx: float, other_cy: float) -> str:
+    """The wall of `own` (engine units: x0, y0, x1, y1) that faces the partner."""
+    x0, y0, x1, y1 = own
+    cx, cy = (x0 + x1) / 2.0, (y0 + y1) / 2.0
+    dx, dy = other_cx - cx, other_cy - cy
+    if abs(dx) > abs(dy):
+        return "east" if dx > 0 else "west"
+    return "south" if dy > 0 else "north"
+
+
+def autoface_ports(d, model, by_id, ports, scale, layer_gap, node_gap, side_map):
+    """Second placement pass: dock each port on the wall facing its partner.
+
+    The declared side is the notation's truth, but the connector reads badly
+    when placement contradicts it: a port declared south whose partner lands
+    north makes the engine's port route wrap around the block. So: place with
+    declared sides, look at where every port-anchored partner landed, and when
+    the facing wall differs from the declared one, move the port and re-route
+    (_port_route is obstacle-aware and anchors on the port's outer face).
+    Every override is returned so the caller can surface it in projection_notes.
+    """
+    overrides: list[dict] = []
+    port_edges = [e for e in model.get("edges", [])
+                  if e.get("src_port") or e.get("dst_port")]
+    if not port_edges:
+        return overrides
+
+    def db_box(n):
+        return (n.x, n.y, n.x + n.w, n.y + n.h)
+
+    for edge in port_edges:
+        if edge.get("route"):            # e.g. "arc-right": the side IS the intent
+            continue
+        src_n, dst_n = by_id[edge["src"]], by_id[edge["dst"]]
+        sp = ports[(edge["src"], edge["src_port"])]
+        tp = ports[(edge["dst"], edge["dst_port"])]
+        want_src = facing_wall(db_box(src_n), dst_n.x + dst_n.w / 2.0, dst_n.y + dst_n.h / 2.0)
+        want_dst = facing_wall(db_box(dst_n), src_n.x + src_n.w / 2.0, src_n.y + src_n.h / 2.0)
+        for port, node, want, declared in ((sp, src_n, want_src, edge["src_port"]),
+                                           (tp, dst_n, want_dst, edge["dst_port"])):
+            db_side = side_map[want]
+            if port.side == db_side:
+                continue
+            if (node.name, port.label) not in {(o["node"], o["port"]) for o in overrides}:
+                overrides.append({"node": node.name, "port": port.label,
+                                  "declared": declared, "placed": want})
+            port.side = db_side
+            port.update_pos()
+    if not overrides:
+        return overrides
+
+    # re-run placement so the engine re-anchors and re-routes every
+    # port edge from the new docking (its routing pass is deterministic)
+    d.layout(routing="orthogonal", layer_gap=layer_gap, node_gap=node_gap)
+    return overrides
 
 
 # ---------------------------------------------------------------------- 3 emit
@@ -232,7 +292,7 @@ def emit(model: dict, d, by_id, ports, scale: float, out_path: str,
     # the router's own port box, so glyph centre == wall and the routed flow
     # still terminates on the glyph's outer face.
     for port in model.get("ports", []):
-        db_port = ports[(port["node"], port["side"])]
+        db_port = ports[(port["node"], port["name"])]
         px = (db_port.x + db_port.w / 2.0) * scale
         py = -(db_port.y + db_port.h / 2.0) * scale
         side = port["side"]
@@ -574,7 +634,9 @@ def main(argv: list[str]) -> int:
         if want_sty:
             print("copied", copy_sty(os.path.dirname(os.path.abspath(out_path))))
         return 0
-    d, by_id, ports = layout(model, sizes, scale, layer_gap, node_gap)
+    d, by_id, ports, overrides = layout(model, sizes, scale, layer_gap, node_gap)
+    if overrides:
+        model.setdefault("projection_notes", {})["port_side_overrides"] = overrides
     emit(model, d, by_id, ports, scale, out_path, node_gap, layer_gap)
     if want_sty:
         from .emit import copy_sty
